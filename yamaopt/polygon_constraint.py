@@ -7,15 +7,19 @@ def polygonstamped_to_nparray(polygon: PolygonStamped):
 
 @attr.s # like a dataclass in python3
 class LinearEqConst(object):
-    # A * x = 0
+    # A * x - b = 0
     A = attr.ib()
     b = attr.ib()
+    def __call__(self, x): return self.A.dot(x) - self.b 
+    def is_satisfying(self, x): return np.all(np.abs(self.__call__(x)) < 1e-7)
 
 @attr.s
 class LinearIneqConst(object):
-    # A * x >= b
+    # A * x - b >= 0
     A = attr.ib()
     b = attr.ib()
+    def __call__(self, x): return self.A.dot(x) - self.b 
+    def is_satisfying(self, x): return np.all(self.__call__(x) > -1e-7)
 
 def check_convexity_and_maybe_ammend(np_polygon):
     # TODO(HiroIshida) PR to jsk_pcl_ros
@@ -63,8 +67,9 @@ def polygon_to_constraint(np_polygon):
 
     n_vec = normalize(np.cross(points[2] - points[1], points[1] - points[0]))
     # construct equality constraint
+    p_whatever = points[0]
     A_eq = np.array([n_vec])
-    b_eq = np.array([0.])
+    b_eq = np.array([n_vec.dot(p_whatever)])
     lineq = LinearEqConst(A_eq, b_eq)
 
     # construct inequality constraint
@@ -74,7 +79,7 @@ def polygon_to_constraint(np_polygon):
         p_here = points_auged[i]
         p_next = points_auged[i+1]
         vec = p_next - p_here
-        n_vec_local = normalize(np.cross(n_vec, vec))
+        n_vec_local = -normalize(np.cross(n_vec, vec))
 
         # let q be a query point. Then ineq const is (q - p_here)^T \dot n_vec_local > 0
         A_local = np.array(n_vec_local)
