@@ -78,7 +78,7 @@ def test_solve():
     q_init = np.ones(7)
     target_obj_pos = np.ones(3)
 
-    sol = kinsol.solve(q_init, polygon, target_obj_pos)
+    sol = kinsol.solve(q_init, polygon, target_obj_pos, True)
     assert sol.success 
 
     ineq, eq = kinsol.configuration_constraint_from_polygon(polygon)

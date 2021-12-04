@@ -9,6 +9,7 @@ import numpy as np
 import scipy.optimize
 
 from yamaopt.polygon_constraint import polygon_to_constraint
+from yamaopt.visualize import PybulletVisualizer
 
 class KinematicSolver:
     def __init__(self, config_path):
@@ -30,6 +31,7 @@ class KinematicSolver:
         self.joint_id_table = {n: id for (n, id) in zip(all_joint_names, tinyfk_joint_ids)}
         self.link_id_table = {n: id for (n, id) in zip(all_link_names, tinyfk_link_ids)}
 
+        self.config = config
         self.control_joint_ids = [self.joint_id_table[name] for name in config['control_joint_names']]
         self.end_effector_id = self.link_id_table[config['endeffector_link_name']]
 
@@ -73,7 +75,7 @@ class KinematicSolver:
 
         return ineq_constraint, eq_constraint
 
-    def solve(self, q_init, np_polygon, target_obs_pos):
+    def solve(self, q_init, np_polygon, target_obs_pos, output_gif=False):
         f_ineq, f_eq = self.configuration_constraint_from_polygon(np_polygon)
 
         eq_const_scipy, eq_const_jac_scipy = scipinize(f_eq)
@@ -92,4 +94,11 @@ class KinematicSolver:
             constraints=[eq_dict, ineq_dict])
             #options=slsqp_option)
             #bounds=bounds,
+
+        if output_gif:
+            urdf_path = os.path.expanduser(self.config['urdf_path'])
+            vis = PybulletVisualizer(urdf_path, self.config['control_joint_names'], False)
+            q_seq = [q_init * s + res.x * (1.0 - s) for s in np.linspace(0, 1.0, 20)]
+            vis.visualize_sequence(q_seq)
+
         return res
