@@ -1,5 +1,5 @@
 import numpy as np
-from yamaopt.polygon_constraint import is_convex, polygon_to_constraint
+from yamaopt.polygon_constraint import is_convex, polygon_to_trans_constraint
 
 def simple_simplex():
     return np.array([[1, 0., 0.], [0., 1., 0.], [0., 0., 1.]])
@@ -17,7 +17,7 @@ def test_is_convex():
 
 def test_polygon_to_constraint():
     polygon = simple_simplex()
-    Cineq, Ceq = polygon_to_constraint(polygon)
+    Cineq, Ceq = polygon_to_trans_constraint(polygon)
 
     assert Ceq(np.random.randn(3)).shape == (1,)
     assert Cineq(np.random.randn(3)).shape == (3,)
@@ -41,7 +41,7 @@ def test_polygon_to_constraint():
 
 
     polygon = simple_square()
-    Cineq, Ceq = polygon_to_constraint(polygon)
+    Cineq, Ceq = polygon_to_trans_constraint(polygon)
 
     assert Ceq(np.random.randn(3)).shape == (1,)
     assert Cineq(np.random.randn(3)).shape == (4,)

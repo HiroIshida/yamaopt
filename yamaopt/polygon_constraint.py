@@ -56,7 +56,7 @@ def is_convex(np_polygon):
     return np.all(sign_list > 0) or np.all(sign_list < 0)
 
 
-def polygon_to_constraint(np_polygon):
+def polygon_to_trans_constraint(np_polygon):
     assert is_convex(np_polygon)
 
     normalize = lambda vec: vec/np.linalg.norm(vec)
@@ -100,10 +100,10 @@ if __name__=='__main__':
     polygons = [polygonstamped_to_nparray(e) for e in polygons]
 
     polygon = np.array([[1, 0., 0.], [0., 1., 0.], [0., 0., 1.]])
-    eq, ineq = polygon_to_constraint(polygon)
+    eq, ineq = polygon_to_trans_constraint(polygon)
 
     for polygon in polygons:
         try:
-            eq, ineq = polygon_to_constraint(polygon)
+            eq, ineq = polygon_to_trans_constraint(polygon)
         except Exception as e:
             pass

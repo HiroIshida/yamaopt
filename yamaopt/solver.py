@@ -8,7 +8,7 @@ import yaml
 import numpy as np
 import scipy.optimize
 
-from yamaopt.polygon_constraint import polygon_to_constraint
+from yamaopt.polygon_constraint import polygon_to_trans_constraint
 from yamaopt.visualize import PybulletVisualizer
 
 class KinematicSolver:
@@ -61,7 +61,7 @@ class KinematicSolver:
         return f
 
     def configuration_constraint_from_polygon(self, np_polygon):
-        lin_ineq, lin_eq = polygon_to_constraint(np_polygon)
+        lin_ineq, lin_eq = polygon_to_trans_constraint(np_polygon)
 
         def ineq_constraint(q):
             P_whole, J_whole = self.forward_kinematics(q)
