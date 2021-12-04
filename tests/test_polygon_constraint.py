@@ -17,7 +17,10 @@ def test_is_convex():
 
 def test_polygon_to_constraint():
     polygon = simple_simplex()
-    Ceq, Cineq = polygon_to_constraint(polygon)
+    Cineq, Ceq = polygon_to_constraint(polygon)
+
+    assert Ceq(np.random.randn(3)).shape == (1,)
+    assert Cineq(np.random.randn(3)).shape == (3,)
 
     center = np.mean(polygon, axis=0)
     assert Ceq.is_satisfying(center)
@@ -35,3 +38,5 @@ def test_polygon_to_constraint():
     for pt in [np.array([0, 0, 2.]), np.array([0, 2., 0.])]:
         assert not Ceq.is_satisfying(pt)
         assert not Cineq.is_satisfying(pt)
+
+

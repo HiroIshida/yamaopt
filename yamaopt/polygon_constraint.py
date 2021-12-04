@@ -88,7 +88,7 @@ def polygon_to_constraint(np_polygon):
     A_ineq = np.vstack(A_ineq_local_list)
     b_ineq = np.array(b_ineq_local_list)
     linineq = LinearIneqConst(A_ineq, b_ineq)
-    return lineq, linineq
+    return linineq, lineq
 
 if __name__=='__main__':
     import pickle
