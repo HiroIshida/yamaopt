@@ -115,7 +115,8 @@ def polygon_to_trans_constraint(np_polygon):
     return linineq, lineq
 
 if __name__=='__main__':
-    return 
+    pass
+    """
     import pickle
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
@@ -137,3 +138,4 @@ if __name__=='__main__':
             eq, ineq = polygon_to_trans_constraint(polygon)
         except Exception as e:
             pass
+    """
