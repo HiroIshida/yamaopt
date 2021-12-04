@@ -11,6 +11,9 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
+        strategy:
+          matrix:
+            python-version: [2.7, 3.6]
         steps:
             - name: Checkout Code
               uses: actions/checkout@v2
@@ -18,17 +21,22 @@ jobs:
             - name: Setup python
               uses: actions/setup-python@v2
               with:
-                  python-version: '3.7'
+                  python-version: ${{ matrix.python-version }}
+
+            - name: Install APT On Linux # This step for just installing skrobot on py 2x...
+              run: |
+                sudo apt-get update -qq -y
+                sudo apt-get install -qq -y libspatialindex-dev freeglut3-dev libsuitesparse-dev libblas-dev liblapack-dev
 
             - name: pip install this package
               run: |
-                  pip3 install -e .
+                  pip install -e .
 
             - name: pip install pytest
               run: |
-                  pip3 install pytest
+                  pip install pytest
 
             - name: Run Pytest
               run: |
-                  python3 -c "import skrobot; skrobot.models.PR2()" # cache pr2 model
+                  python -c "import skrobot; skrobot.models.PR2()" # cache pr2 model
                   pytest -v tests
