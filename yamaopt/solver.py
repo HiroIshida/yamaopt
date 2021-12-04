@@ -57,17 +57,17 @@ class KinematicSolver:
     def configuration_constraint_from_polygon(self, np_polygon):
         lin_ineq, lin_eq = polygon_to_constraint(np_polygon)
 
-        def create_ineq_constraint(q):
+        def ineq_constraint(q):
             P, J = self.forward_kinematics(q)
             val = ((lin_ineq.A.dot(P.T)).T - lin_ineq.b).flatten()
             jac = lin_ineq.A.dot(J)
             return val, jac
 
-        def create_eq_constraint(q):
+        def eq_constraint(q):
             P, J = self.forward_kinematics(q)
             val = ((lin_eq.A.dot(P.T)).T - lin_eq.b).flatten()
             jac = lin_eq.A.dot(J)
             return val, jac
 
-        return create_ineq_constraint, create_eq_constraint
+        return ineq_constraint, eq_constraint
 
