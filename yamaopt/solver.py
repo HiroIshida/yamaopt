@@ -10,7 +10,7 @@ from yamaopt.polygon_constraint import polygon_to_desired_rpy
 from yamaopt.utils import scipinize
 
 @attr.s # like a dataclass in python3
-class SolverConfig:
+class SolverConfig(object):
     urdf_path = attr.ib()
     optimization_frame = attr.ib()
     control_joint_names = attr.ib()
