@@ -4,11 +4,15 @@ from yamaopt.polygon_constraint import is_convex, polygon_to_constraint
 def simple_simplex():
     return np.array([[1, 0., 0.], [0., 1., 0.], [0., 0., 1.]])
 
+def simple_square():
+    return np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
+
 def simple_nonconvex():
     return np.array([[0, 0., 0.], [1., 0., 0.], [0.5, 0.5, 0.], [1., 1., 0], [0, 1., 0]])
 
 def test_is_convex():
     assert is_convex(simple_simplex())
+    assert is_convex(simple_square())
     assert not is_convex(simple_nonconvex())
 
 def test_polygon_to_constraint():

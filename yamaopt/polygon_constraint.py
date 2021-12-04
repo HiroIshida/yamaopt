@@ -47,14 +47,13 @@ def is_convex(np_polygon):
     points = np_polygon
     points_auged = np.vstack([points, points[0], points[1]])
 
-    dotpro_list = []
+    crosspro_list = []
     for i in range(len(points)):
         vec1 = points_auged[i+1] - points_auged[i]
         vec2 = points_auged[i+2] - points_auged[i+1]
-        dotpro_list.append(vec1.dot(vec2))
-    dotpro_list = np.array(dotpro_list)
-    #assert np.all(dotpro_list > 0) or np.all(dotpro_list < 0), "all dot products between segment vector must have save sign : {}".format(dotpro_list) 
-    return np.all(dotpro_list > 0) or np.all(dotpro_list < 0)
+        crosspro_list.append(np.cross(vec1, vec2))
+    sign_list = np.sign([crosspro_list[0].dot(e) for e in crosspro_list])
+    return np.all(sign_list > 0) or np.all(sign_list < 0)
 
 
 def polygon_to_constraint(np_polygon):
