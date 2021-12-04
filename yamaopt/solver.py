@@ -1,10 +1,12 @@
 import os
 from tinyfk import RobotModel
 import skrobot
+from skrobot.planner.utils import scipinize
 from skrobot.planner.utils import _forward_kinematics
 from geometry_msgs.msg import PolygonStamped, Polygon, Point32
 import yaml
 import numpy as np
+import scipy.optimize
 
 from yamaopt.polygon_constraint import polygon_to_constraint
 
@@ -71,3 +73,23 @@ class KinematicSolver:
 
         return ineq_constraint, eq_constraint
 
+    def solve(self, q_init, np_polygon, target_obs_pos):
+        f_ineq, f_eq = self.configuration_constraint_from_polygon(np_polygon)
+
+        eq_const_scipy, eq_const_jac_scipy = scipinize(f_eq)
+        eq_dict = {'type': 'eq', 'fun': eq_const_scipy,
+                   'jac': eq_const_jac_scipy}
+        ineq_const_scipy, ineq_const_jac_scipy = scipinize(f_ineq)
+        ineq_dict = {'type': 'ineq', 'fun': ineq_const_scipy,
+                     'jac': ineq_const_jac_scipy}
+
+        f_obj = self.create_objective_function(target_obs_pos)
+
+        f, jac = scipinize(f_obj)
+
+        res = scipy.optimize.minimize(
+            f, q_init, method='SLSQP', jac=jac,
+            constraints=[eq_dict, ineq_dict])
+            #options=slsqp_option)
+            #bounds=bounds,
+        return res

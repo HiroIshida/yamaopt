@@ -68,3 +68,21 @@ def test_objfun():
 
     for _ in range(10):
         _test_objfun(objfun, np.random.randn(7))
+
+def test_solve():
+    config_path = "./config/pr2_conf.yaml"
+    kinsol = KinematicSolver(config_path)
+
+    polygon = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
+    polygon += np.array([0.7, 0.0, 1.3])
+    q_init = np.ones(7)
+    target_obj_pos = np.ones(3)
+
+    sol = kinsol.solve(q_init, polygon, target_obj_pos)
+    assert sol.success 
+
+    ineq, eq = kinsol.configuration_constraint_from_polygon(polygon)
+
+
+
+
