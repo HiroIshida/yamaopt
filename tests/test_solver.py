@@ -2,6 +2,7 @@ import os
 import numpy as np
 from numpy.lib.twodim_base import eye
 from yamaopt.solver import KinematicSolver
+from yamaopt.polygon_constraint import polygon_to_constraint
 
 def compute_numerical_jacobian(f, x0):
     f0 = f(x0)
@@ -82,7 +83,7 @@ def test_solve():
     assert sol.success 
 
     ineq, eq = kinsol.configuration_constraint_from_polygon(polygon)
-
-
-
-
+    pos, jac = kinsol.forward_kinematics(sol.x)
+    ineq, eq = polygon_to_constraint(polygon)
+    assert ineq.is_satisfying(pos.flatten())
+    assert eq.is_satisfying(pos.flatten())
