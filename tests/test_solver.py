@@ -3,7 +3,7 @@ import math
 import numpy as np
 from skrobot.coordinates.math import rotation_matrix
 from numpy.lib.twodim_base import eye
-from yamaopt.solver import KinematicSolver
+from yamaopt.solver import KinematicSolver, SolverConfig
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
 
 def compute_numerical_jacobian(f, x0):
@@ -41,7 +41,8 @@ def test_compute_numerical_jacobian():
 
 def test_constraint():
     config_path = "./config/pr2_conf.yaml"
-    kinsol = KinematicSolver(config_path)
+    config = SolverConfig.from_config_path(config_path)
+    kinsol = KinematicSolver(config)
 
     def _test_constraint_jacobian(constraint, q_test):
         f = lambda q: constraint(q)[0]
@@ -58,7 +59,8 @@ def test_constraint():
 
 def test_objfun():
     config_path = "./config/pr2_conf.yaml"
-    kinsol = KinematicSolver(config_path)
+    config = SolverConfig.from_config_path(config_path)
+    kinsol = KinematicSolver(config)
 
     target_pos = np.ones(3)
     objfun = kinsol.create_objective_function(target_pos)
@@ -74,23 +76,24 @@ def test_objfun():
 
 def test_solve():
     config_path = "./config/pr2_conf.yaml"
-    kinsol = KinematicSolver(config_path)
+    config = SolverConfig.from_config_path(config_path)
+    kinsol = KinematicSolver(config)
 
     polygon1 = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
-    polygon1 += np.array([0.7, 0.0, 1.3])
+    polygon1 += np.array([0.7, 0.0, 1.0])
 
     polygon2 = np.array([[0.5, -0.3, 0.0], [0.5, 0.3, 0.0], [0.0, 0.0, 0.6]])
     polygon2 += np.array([0.4, 0.0, 0.8])
 
     polygon3 = np.array([[0.7, 0.7, 0.0], [0.9, 0.5, 0.3], [0.5, 0.9, 0.3]])
-    polygon3 += np.array([-0.3, -0.3, 0.7])
+    polygon3 += np.array([-0.4, -0.3, 0.9])
 
-    for i, polygon in enumerate([polygon1, polygon2, polygon3]):
-        q_init = np.ones(7) * 0.1
+    #for i, polygon in enumerate([polygon1, polygon2, polygon3]):
+    for i, polygon in enumerate([polygon1, polygon2]):
+        q_init = np.ones(7) * 0.3
         target_obj_pos = np.ones(3)
 
-        with_debug_gui = True if i == 2 else False
-        sol = kinsol.solve(q_init, polygon, target_obj_pos, with_debug_gui)
+        sol = kinsol.solve(q_init, polygon, target_obj_pos)
         assert sol.success 
 
         ineq, eq = kinsol.configuration_constraint_from_polygon(polygon)

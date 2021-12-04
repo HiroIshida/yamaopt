@@ -17,7 +17,7 @@ if __name__=='__main__':
     mesh = visual_mesh=trimesh.Trimesh(vertices=polygon, faces=[[0, 1, 2]], face_colors=[255, 0, 0, 200])
     polygon_link = MeshLink(mesh)
 
-    target_pos = np.array([-0.3, -0.6, 0.6])
+    target_pos = np.array([-0.3, -0.6, 1.6])
     target_sphere_link = Sphere(0.05, pos=target_pos, color=[0, 0, 255])
 
     sol = kinsol.solve(-np.ones(7)*0.4, polygon, target_pos)

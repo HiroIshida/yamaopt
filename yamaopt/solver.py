@@ -1,8 +1,10 @@
 import os
+import attr
 from tinyfk import RobotModel
 import skrobot
 from skrobot.planner.utils import scipinize
 from skrobot.planner.utils import _forward_kinematics
+from skrobot.planner.utils import set_robot_config
 from geometry_msgs.msg import PolygonStamped, Polygon, Point32
 import yaml
 import numpy as np
@@ -12,11 +14,26 @@ from yamaopt.polygon_constraint import polygon_to_trans_constraint
 from yamaopt.polygon_constraint import polygon_to_desired_rpy
 from yamaopt.visualize import PybulletVisualizer
 
-class KinematicSolver:
-    def __init__(self, config_path):
+@attr.s # like a dataclass in python3
+class SolverConfig:
+    urdf_path = attr.ib()
+    optimization_frame = attr.ib()
+    control_joint_names = attr.ib()
+    endeffector_link_name = attr.ib()
+
+    @classmethod
+    def from_config_path(cls, config_path):
         with open(config_path, 'r') as f:
-            config = yaml.safe_load(f)
-        urdf_path = os.path.expanduser(config['urdf_path'])
+            cfg = yaml.safe_load(f)
+        return cls(
+                urdf_path = cfg['urdf_path'],
+                optimization_frame = cfg['optimization_frame'],
+                control_joint_names = cfg['control_joint_names'],
+                endeffector_link_name = cfg['endeffector_link_name'])
+
+class KinematicSolver:
+    def __init__(self, config):
+        urdf_path = os.path.expanduser(config.urdf_path)
         self.kin = RobotModel(urdf_path)
 
         robot = skrobot.model.RobotModel()
@@ -33,8 +50,14 @@ class KinematicSolver:
         self.link_id_table = {n: id for (n, id) in zip(all_link_names, tinyfk_link_ids)}
 
         self.config = config
-        self.control_joint_ids = [self.joint_id_table[name] for name in config['control_joint_names']]
-        self.end_effector_id = self.link_id_table[config['endeffector_link_name']]
+        self.control_joint_ids = [self.joint_id_table[name] for name in config.control_joint_names]
+        self.joint_limits = self.kin.get_joint_limits(self.control_joint_ids)
+        self.end_effector_id = self.link_id_table[config.endeffector_link_name]
+
+    def set_skrobot_angle_vector(self, q):
+        assert len(q) == len(self.config.control_joint_names)
+        joints = [self.robot.__dict__[name] for name in self.config.control_joint_names]
+        set_robot_config(self.robot, joints, q, with_base=False)
 
     # TODO lru cache
     def forward_kinematics(self, q):
@@ -88,7 +111,7 @@ class KinematicSolver:
 
         return ineq_constraint, eq_constraint
 
-    def solve(self, q_init, np_polygon, target_obs_pos, output_gif=False):
+    def solve(self, q_init, np_polygon, target_obs_pos):
         f_ineq, f_eq = self.configuration_constraint_from_polygon(np_polygon)
 
         eq_const_scipy, eq_const_jac_scipy = scipinize(f_eq)
@@ -104,16 +127,16 @@ class KinematicSolver:
 
         res = scipy.optimize.minimize(
             f, q_init, method='SLSQP', jac=jac,
-            constraints=[eq_dict, ineq_dict])
-            #options=slsqp_option)
-            #bounds=bounds,
+            constraints=[eq_dict, ineq_dict], bounds=self.joint_limits)
 
+        """
         if output_gif:
-            urdf_path = os.path.expanduser(self.config['urdf_path'])
-            vis = PybulletVisualizer(urdf_path, self.config['control_joint_names'], False)
+            urdf_path = os.path.expanduser(self.config.urdf_path)
+            vis = PybulletVisualizer(urdf_path, self.config.control_joint_names, False)
             n_seq = 20
             dq = (res.x - q_init) / (n_seq - 1)
             q_seq = [q_init + dq * i for i in range(n_seq)]
             vis.visualize_sequence(q_seq)
+        """
 
         return res
