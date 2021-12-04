@@ -1,7 +1,6 @@
 import attr
 import numpy as np
 from geometry_msgs.msg import PolygonStamped
-from skrobot.coordinates.math import rodrigues
 from skrobot.coordinates.math import matrix2quaternion
 from skrobot.coordinates.math import quaternion2rpy
 

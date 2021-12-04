@@ -1,10 +1,7 @@
 import os
 import attr
 from tinyfk import RobotModel
-import skrobot
 from skrobot.planner.utils import scipinize
-from skrobot.planner.utils import _forward_kinematics
-from skrobot.planner.utils import set_robot_config
 from geometry_msgs.msg import PolygonStamped, Polygon, Point32
 import yaml
 import numpy as np
@@ -36,28 +33,10 @@ class KinematicSolver:
         urdf_path = os.path.expanduser(config.urdf_path)
         self.kin = RobotModel(urdf_path)
 
-        robot = skrobot.model.RobotModel()
-        robot.load_urdf_file(urdf_path)
-        self.robot = robot
-
-        # create joint-id, link-id tables
-        all_joint_names = [j.name for j in self.robot.joint_list]
-        all_link_names = [l.name for l in self.robot.link_list]
-        tinyfk_joint_ids = self.kin.get_joint_ids(all_joint_names)
-        tinyfk_link_ids = self.kin.get_link_ids(all_link_names)
-
-        self.joint_id_table = {n: id for (n, id) in zip(all_joint_names, tinyfk_joint_ids)}
-        self.link_id_table = {n: id for (n, id) in zip(all_link_names, tinyfk_link_ids)}
-
         self.config = config
-        self.control_joint_ids = [self.joint_id_table[name] for name in config.control_joint_names]
+        self.control_joint_ids = self.kin.get_joint_ids(config.control_joint_names)
         self.joint_limits = self.kin.get_joint_limits(self.control_joint_ids)
-        self.end_effector_id = self.link_id_table[config.endeffector_link_name]
-
-    def set_skrobot_angle_vector(self, q):
-        assert len(q) == len(self.config.control_joint_names)
-        joints = [self.robot.__dict__[name] for name in self.config.control_joint_names]
-        set_robot_config(self.robot, joints, q, with_base=False)
+        self.end_effector_id = self.kin.get_link_ids([config.endeffector_link_name])[0]
 
     # TODO lru cache
     def forward_kinematics(self, q):
