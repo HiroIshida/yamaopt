@@ -39,7 +39,7 @@ class KinematicSolver:
     def forward_kinematics(self, q):
         assert isinstance(q, np.ndarray) and q.ndim == 1
         with_jacobian = True 
-        use_rotation = False # TODO add rotation
+        use_rotation = True
         use_base = False
         
         link_ids = [self.end_effector_id]
@@ -51,9 +51,11 @@ class KinematicSolver:
     def create_objective_function(self, target_obs_pos):
 
         def f(q):
-            P, J = self.forward_kinematics(q)
-            val = np.sum((P.flatten() - target_obs_pos) ** 2)
-            grad = 2 * (P.flatten() - target_obs_pos).dot(J)
+            P_whole, J_whole = self.forward_kinematics(q)
+            P_pos = P_whole[:, :3]
+            J_pos = J_whole[:3, :]
+            val = np.sum((P_pos.flatten() - target_obs_pos) ** 2)
+            grad = 2 * (P_pos.flatten() - target_obs_pos).dot(J_pos)
             return val, grad
 
         return f
@@ -62,15 +64,19 @@ class KinematicSolver:
         lin_ineq, lin_eq = polygon_to_constraint(np_polygon)
 
         def ineq_constraint(q):
-            P, J = self.forward_kinematics(q)
-            val = ((lin_ineq.A.dot(P.T)).T - lin_ineq.b).flatten()
-            jac = lin_ineq.A.dot(J)
+            P_whole, J_whole = self.forward_kinematics(q)
+            P_pos = P_whole[:, :3]
+            J_pos = J_whole[:3, :]
+            val = ((lin_ineq.A.dot(P_pos.T)).T - lin_ineq.b).flatten()
+            jac = lin_ineq.A.dot(J_pos)
             return val, jac
 
         def eq_constraint(q):
-            P, J = self.forward_kinematics(q)
-            val = ((lin_eq.A.dot(P.T)).T - lin_eq.b).flatten()
-            jac = lin_eq.A.dot(J)
+            P_whole, J_whole = self.forward_kinematics(q)
+            P_pos = P_whole[:, :3]
+            J_pos = J_whole[:3, :]
+            val = ((lin_eq.A.dot(P_pos.T)).T - lin_eq.b).flatten()
+            jac = lin_eq.A.dot(J_pos)
             return val, jac
 
         return ineq_constraint, eq_constraint

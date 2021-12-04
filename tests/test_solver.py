@@ -83,7 +83,8 @@ def test_solve():
     assert sol.success 
 
     ineq, eq = kinsol.configuration_constraint_from_polygon(polygon)
-    pos, jac = kinsol.forward_kinematics(sol.x)
+    P, jac = kinsol.forward_kinematics(sol.x)
+    pos = P[:, :3]
     ineq, eq = polygon_to_constraint(polygon)
     assert ineq.is_satisfying(pos.flatten())
     assert eq.is_satisfying(pos.flatten())
