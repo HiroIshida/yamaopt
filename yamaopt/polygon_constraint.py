@@ -62,10 +62,28 @@ def polygon_to_desired_rpy(np_polygon):
     assert is_convex(np_polygon)
     normalize = lambda vec: vec/np.linalg.norm(vec)
     points = np_polygon
-    n_vec = normalize(np.cross(points[2] - points[1], points[1] - points[0]))
-    mat = rodrigues(n_vec, 0.0)
-    rpy = quaternion2rpy(matrix2quaternion(mat))[0]
-    return rpy
+    center = np.mean(points, axis=0)
+    x_axis = normalize(np.cross(points[2] - points[1], points[1] - points[0]))
+
+    tmp = np.array([x_axis[0], x_axis[1], 0.0])
+
+    if center.dot(x_axis) < 0.0:
+        x_axis *= -1
+
+    if(abs(x_axis[2]) < 1e-3):
+        y_axis = np.array([0, 1., 0.])
+    else:
+        y_axis = normalize(np.cross(x_axis, tmp))
+
+    z_axis = normalize(np.cross(x_axis, y_axis))
+
+    if(z_axis[2] < 0):
+        z_axis *= -1
+        y_axis *= -1
+        
+    M = np.vstack([x_axis, y_axis, z_axis]).T
+    rpy = quaternion2rpy(matrix2quaternion(M))[0]
+    return np.flip(rpy)
 
 def polygon_to_trans_constraint(np_polygon):
     assert is_convex(np_polygon)

@@ -64,6 +64,8 @@ class KinematicSolver:
     def configuration_constraint_from_polygon(self, np_polygon):
         lin_ineq, lin_eq = polygon_to_trans_constraint(np_polygon)
         rpy_desired = polygon_to_desired_rpy(np_polygon)
+        print("desired")
+        print(rpy_desired)
 
         def ineq_constraint(q):
             P_whole, J_whole = self.forward_kinematics(q)
@@ -80,8 +82,8 @@ class KinematicSolver:
             val_pos = ((lin_eq.A.dot(P_pos.T)).T - lin_eq.b).flatten()
             jac_pos = lin_eq.A.dot(J_pos)
 
-            val_rot = P_rot[:, 1:].flatten() - rpy_desired[1:]
-            jac_rot = J_rot[1:, :]
+            val_rot = P_rot.flatten() - rpy_desired
+            jac_rot = J_rot
             return np.hstack([val_pos, val_rot]), np.vstack([jac_pos, jac_rot])
 
         return ineq_constraint, eq_constraint

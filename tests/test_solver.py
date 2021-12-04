@@ -1,5 +1,7 @@
 import os
+import math
 import numpy as np
+from skrobot.coordinates.math import rotation_matrix
 from numpy.lib.twodim_base import eye
 from yamaopt.solver import KinematicSolver
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
@@ -74,17 +76,29 @@ def test_solve():
     config_path = "./config/pr2_conf.yaml"
     kinsol = KinematicSolver(config_path)
 
-    polygon = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
-    polygon += np.array([0.7, 0.0, 1.3])
-    q_init = np.ones(7) * 0.1
-    target_obj_pos = np.ones(3)
+    polygon1 = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
+    polygon1 += np.array([0.7, 0.0, 1.3])
 
-    sol = kinsol.solve(q_init, polygon, target_obj_pos, True)
-    assert sol.success 
+    polygon2 = np.array([[0.5, -0.3, 0.0], [0.5, 0.3, 0.0], [0.0, 0.0, 0.6]])
+    polygon2 += np.array([0.4, 0.0, 0.8])
 
-    ineq, eq = kinsol.configuration_constraint_from_polygon(polygon)
-    P, jac = kinsol.forward_kinematics(sol.x)
-    pos = P[:, :3]
-    ineq, eq = polygon_to_trans_constraint(polygon)
-    assert ineq.is_satisfying(pos.flatten())
-    assert eq.is_satisfying(pos.flatten())
+    polygon3 = np.array([[0.7, 0.7, 0.0], [0.9, 0.5, 0.3], [0.5, 0.9, 0.3]])
+    polygon3 += np.array([-0.3, -0.3, 0.7])
+
+    for i, polygon in enumerate([polygon1, polygon2, polygon3]):
+        q_init = np.ones(7) * 0.1
+        target_obj_pos = np.ones(3)
+
+        with_debug_gui = True if i == 2 else False
+        sol = kinsol.solve(q_init, polygon, target_obj_pos, with_debug_gui)
+        assert sol.success 
+
+        ineq, eq = kinsol.configuration_constraint_from_polygon(polygon)
+        P, jac = kinsol.forward_kinematics(sol.x)
+        pos = P[:, :3]
+        ineq, eq = polygon_to_trans_constraint(polygon)
+        assert ineq.is_satisfying(pos.flatten())
+        assert eq.is_satisfying(pos.flatten())
+
+        # check orientation
+        vec = kinsol.robot.r_gripper_tool_frame.rotation[:, 0]

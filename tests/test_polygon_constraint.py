@@ -1,5 +1,7 @@
 import numpy as np
+from skrobot.coordinates.math import rpy2quaternion
 from yamaopt.polygon_constraint import is_convex, polygon_to_trans_constraint
+from yamaopt.polygon_constraint import polygon_to_desired_rpy
 
 def simple_simplex():
     return np.array([[1, 0., 0.], [0., 1., 0.], [0., 0., 1.]])
@@ -54,3 +56,11 @@ def test_polygon_to_constraint():
         assert Ceq.is_satisfying(pt)
         assert Cineq.is_satisfying(pt)
         assert np.all(Cineq(pt) > -1e-7)
+
+def test_polygon_to_desired_rpy():
+    polygon = simple_simplex()
+    rpy = polygon_to_desired_rpy(polygon)
+    q = rpy2quaternion(rpy)
+    print(q)
+
+
