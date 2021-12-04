@@ -98,7 +98,9 @@ class KinematicSolver:
         if output_gif:
             urdf_path = os.path.expanduser(self.config['urdf_path'])
             vis = PybulletVisualizer(urdf_path, self.config['control_joint_names'], False)
-            q_seq = [q_init * s + res.x * (1.0 - s) for s in np.linspace(0, 1.0, 20)]
+            n_seq = 20
+            dq = (res.x - q_init) / (n_seq - 1)
+            q_seq = [q_init + dq * i for i in range(n_seq)]
             vis.visualize_sequence(q_seq)
 
         return res

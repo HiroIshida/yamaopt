@@ -76,7 +76,7 @@ def test_solve():
 
     polygon = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
     polygon += np.array([0.7, 0.0, 1.3])
-    q_init = np.ones(7)
+    q_init = np.ones(7) * 0.1
     target_obj_pos = np.ones(3)
 
     sol = kinsol.solve(q_init, polygon, target_obj_pos, True)
