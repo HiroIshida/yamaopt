@@ -9,6 +9,7 @@ import numpy as np
 import scipy.optimize
 
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
+from yamaopt.polygon_constraint import polygon_to_desired_rpy
 from yamaopt.visualize import PybulletVisualizer
 
 class KinematicSolver:
@@ -62,6 +63,7 @@ class KinematicSolver:
 
     def configuration_constraint_from_polygon(self, np_polygon):
         lin_ineq, lin_eq = polygon_to_trans_constraint(np_polygon)
+        rpy_desired = polygon_to_desired_rpy(np_polygon)
 
         def ineq_constraint(q):
             P_whole, J_whole = self.forward_kinematics(q)
@@ -73,11 +75,14 @@ class KinematicSolver:
 
         def eq_constraint(q):
             P_whole, J_whole = self.forward_kinematics(q)
-            P_pos = P_whole[:, :3]
-            J_pos = J_whole[:3, :]
-            val = ((lin_eq.A.dot(P_pos.T)).T - lin_eq.b).flatten()
-            jac = lin_eq.A.dot(J_pos)
-            return val, jac
+            P_pos, P_rot = P_whole[:, :3], P_whole[:, 3:]
+            J_pos, J_rot = J_whole[:3, :], J_whole[3:, :]
+            val_pos = ((lin_eq.A.dot(P_pos.T)).T - lin_eq.b).flatten()
+            jac_pos = lin_eq.A.dot(J_pos)
+
+            val_rot = P_rot[:, 1:].flatten() - rpy_desired[1:]
+            jac_rot = J_rot[1:, :]
+            return np.hstack([val_pos, val_rot]), np.vstack([jac_pos, jac_rot])
 
         return ineq_constraint, eq_constraint
 

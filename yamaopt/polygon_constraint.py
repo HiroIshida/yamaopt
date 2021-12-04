@@ -1,6 +1,9 @@
 import attr
 import numpy as np
 from geometry_msgs.msg import PolygonStamped
+from skrobot.coordinates.math import rodrigues
+from skrobot.coordinates.math import matrix2quaternion
+from skrobot.coordinates.math import quaternion2rpy
 
 def polygonstamped_to_nparray(polygon: PolygonStamped):
     return np.array([[pt.x, pt.y, pt.z] for pt in polygon.polygon.points])
@@ -55,6 +58,14 @@ def is_convex(np_polygon):
     sign_list = np.sign([crosspro_list[0].dot(e) for e in crosspro_list])
     return np.all(sign_list > 0) or np.all(sign_list < 0)
 
+def polygon_to_desired_rpy(np_polygon):
+    assert is_convex(np_polygon)
+    normalize = lambda vec: vec/np.linalg.norm(vec)
+    points = np_polygon
+    n_vec = normalize(np.cross(points[2] - points[1], points[1] - points[0]))
+    mat = rodrigues(n_vec, 0.0)
+    rpy = quaternion2rpy(matrix2quaternion(mat))[0]
+    return rpy
 
 def polygon_to_trans_constraint(np_polygon):
     assert is_convex(np_polygon)
