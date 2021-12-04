@@ -1,11 +1,7 @@
 import attr
 import numpy as np
-from geometry_msgs.msg import PolygonStamped
 from skrobot.coordinates.math import matrix2quaternion
 from skrobot.coordinates.math import quaternion2rpy
-
-def polygonstamped_to_nparray(polygon: PolygonStamped):
-    return np.array([[pt.x, pt.y, pt.z] for pt in polygon.polygon.points])
 
 @attr.s # like a dataclass in python3
 class LinearEqConst(object):
@@ -122,6 +118,11 @@ if __name__=='__main__':
     import pickle
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
+
+    from geometry_msgs.msg import PolygonStamped
+    def polygonstamped_to_nparray(polygon: PolygonStamped):
+        return np.array([[pt.x, pt.y, pt.z] for pt in polygon.polygon.points])
+
 
     with open('./accum_polygons.pickle', 'rb') as f:
         polygons = pickle.load(f)
