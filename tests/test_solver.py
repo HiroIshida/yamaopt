@@ -7,14 +7,24 @@ def compute_numerical_jacobian(f, x0):
     f0 = f(x0)
 
     dim_inp = len(x0)
-    dim_out = len(f0)
 
     eps =1e-6
     one_hots = [vec * eps for vec in np.eye(dim_inp)]
-    jac = np.zeros((dim_out, dim_inp))
+
+    is_out_jacobian = isinstance(f0, np.ndarray)
+
+
+    if is_out_jacobian:
+        dim_out = len(f0)
+        jac = np.zeros((dim_out, dim_inp))
+    else:
+        jac = np.zeros(dim_inp) # actually gradient
 
     for i, dx in enumerate(one_hots):
-        jac[:, i] = (f(x0 + dx) - f(x0)) / eps
+        if is_out_jacobian:
+            jac[:, i] = (f(x0 + dx) - f(x0)) / eps
+        else:
+            jac[i] = (f(x0 + dx) - f(x0)) / eps
     return jac
 
 def test_compute_numerical_jacobian():
@@ -42,3 +52,19 @@ def test_constraint():
         q_test = np.random.randn(len(kinsol.control_joint_ids))
         _test_constraint_jacobian(ineq_const, q_test)
         _test_constraint_jacobian(eq_const, q_test)
+
+def test_objfun():
+    config_path = "./config/pr2_conf.yaml"
+    kinsol = KinematicSolver(config_path)
+
+    target_pos = np.ones(3)
+    objfun = kinsol.create_objective_function(target_pos)
+
+    def _test_objfun(objfun, q_test):
+        f = lambda q: objfun(q)[0]
+        grad_numel = compute_numerical_jacobian(f, q_test)
+        grad_anal = objfun(q_test)[1]
+        np.testing.assert_almost_equal(grad_numel, grad_anal, decimal=4)
+
+    for _ in range(10):
+        _test_objfun(objfun, np.random.randn(7))

@@ -31,29 +31,40 @@ class KinematicSolver:
         self.control_joint_ids = [self.joint_id_table[name] for name in config['control_joint_names']]
         self.end_effector_id = self.link_id_table[config['endeffector_link_name']]
 
-    def configuration_constraint_from_polygon(self, np_polygon, use_base=False):
+    # TODO lru cache
+    def forward_kinematics(self, q):
+        assert isinstance(q, np.ndarray) and q.ndim == 1
+        with_jacobian = True 
+        use_rotation = False # TODO add rotation
+        use_base = False
+        
+        link_ids = [self.end_effector_id]
+        joint_ids = self.control_joint_ids
+        P, J = self.kin.solve_forward_kinematics(
+                [q], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
+        return P, J
+
+    def create_objective_function(self, target_obs_pos):
+
+        def f(q):
+            P, J = self.forward_kinematics(q)
+            val = np.sum((P.flatten() - target_obs_pos) ** 2)
+            grad = 2 * (P.flatten() - target_obs_pos).dot(J)
+            return val, grad
+
+        return f
+
+    def configuration_constraint_from_polygon(self, np_polygon):
         lin_ineq, lin_eq = polygon_to_constraint(np_polygon)
 
-        # TODO lru cache
-        def fk(q):
-            assert isinstance(q, np.ndarray) and q.ndim == 1
-            with_jacobian = True 
-            use_rotation = False # TODO add rotation
-            
-            link_ids = [self.end_effector_id]
-            joint_ids = self.control_joint_ids
-            P, J = self.kin.solve_forward_kinematics(
-                    [q], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
-            return P, J
-
         def create_ineq_constraint(q):
-            P, J = fk(q)
+            P, J = self.forward_kinematics(q)
             val = ((lin_ineq.A.dot(P.T)).T - lin_ineq.b).flatten()
             jac = lin_ineq.A.dot(J)
             return val, jac
 
         def create_eq_constraint(q):
-            P, J = fk(q)
+            P, J = self.forward_kinematics(q)
             val = ((lin_eq.A.dot(P.T)).T - lin_eq.b).flatten()
             jac = lin_eq.A.dot(J)
             return val, jac
