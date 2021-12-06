@@ -102,3 +102,4 @@ def test_solve():
         ineq, eq = polygon_to_trans_constraint(polygon)
         assert ineq.is_satisfying(pos.flatten())
         assert eq.is_satisfying(pos.flatten())
+    assert False
