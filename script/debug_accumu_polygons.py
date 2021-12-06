@@ -44,7 +44,7 @@ class Accumulator:
 
 
 if __name__ == '__main__':
-    rospy.init_node('listener', anonymous=True, disable_signals=False)
+    rospy.init_node('listener', anonymous=True, disable_signals=True)
     acc = Accumulator()
     try:
         rospy.loginfo("start node")
