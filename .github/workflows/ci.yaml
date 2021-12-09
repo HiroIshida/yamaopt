@@ -39,5 +39,4 @@ jobs:
 
             - name: Run Pytest
               run: |
-                  python -c "import skrobot; skrobot.models.PR2()" # cache pr2 model
                   pytest -v tests

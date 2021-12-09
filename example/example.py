@@ -5,7 +5,6 @@ import trimesh
 import skrobot
 from skrobot.model.primitives import MeshLink, Sphere
 from skrobot.planner.utils import set_robot_config
-from skrobot.data import pr2_urdfpath
 import numpy as np
 from yamaopt.solver import KinematicSolver, SolverConfig
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
@@ -45,7 +44,6 @@ class VisManager:
             self.viewer.redraw()
 
 if __name__=='__main__':
-    pr2_urdfpath()
     config_path = "../config/pr2_conf.yaml"
 
     config = SolverConfig.from_config_path(config_path)
