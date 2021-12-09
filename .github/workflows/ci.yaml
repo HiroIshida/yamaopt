@@ -46,4 +46,6 @@ jobs:
                   cd example
                   python example.py -robot pr2
                   python example.py -robot fetch
+                  python example.py -robot pr2 --use_base
+                  python example.py -robot fetch --use_base
 

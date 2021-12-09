@@ -76,29 +76,31 @@ def test_objfun():
 
 def test_solve():
     config_path = "./config/pr2_conf.yaml"
-    config = SolverConfig.from_config_path(config_path)
-    kinsol = KinematicSolver(config)
+    for use_base in [False, True]:
+        config = SolverConfig.from_config_path(config_path, use_base)
+        kinsol = KinematicSolver(config)
 
-    polygon1 = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
-    polygon1 += np.array([0.7, 0.0, 1.0])
+        polygon1 = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
+        polygon1 += np.array([0.7, 0.0, 1.0])
 
-    polygon2 = np.array([[0.5, -0.3, 0.0], [0.5, 0.3, 0.0], [0.0, 0.0, 0.6]])
-    polygon2 += np.array([0.4, 0.0, 0.8])
+        polygon2 = np.array([[0.5, -0.3, 0.0], [0.5, 0.3, 0.0], [0.0, 0.0, 0.6]])
+        polygon2 += np.array([0.4, 0.0, 0.8])
 
-    polygon3 = np.array([[0.7, 0.7, 0.0], [0.9, 0.5, 0.3], [0.5, 0.9, 0.3]])
-    polygon3 += np.array([-0.4, -0.3, 0.9])
+        polygon3 = np.array([[0.7, 0.7, 0.0], [0.9, 0.5, 0.3], [0.5, 0.9, 0.3]])
+        polygon3 += np.array([-0.4, -0.3, 0.9])
 
-    #for i, polygon in enumerate([polygon1, polygon2, polygon3]):
-    for i, polygon in enumerate([polygon1, polygon2]):
-        q_init = np.ones(7) * 0.3
-        target_obj_pos = np.ones(3)
+        #for i, polygon in enumerate([polygon1, polygon2, polygon3]):
+        for i, polygon in enumerate([polygon1, polygon2]):
+            q_init = np.ones(7) * 0.3
+            target_obj_pos = np.ones(3)
 
-        sol = kinsol.solve(q_init, polygon, target_obj_pos)
-        assert sol.success 
+            sol = kinsol.solve(q_init, polygon, target_obj_pos)
+            assert sol.success 
+            assert len(sol.x) == 7 + 3 * use_base
 
-        ineq, eq = kinsol.configuration_constraint_from_polygon(polygon)
-        P, jac = kinsol.forward_kinematics(sol.x)
-        pos = P[:, :3]
-        ineq, eq = polygon_to_trans_constraint(polygon)
-        assert ineq.is_satisfying(pos.flatten())
-        assert eq.is_satisfying(pos.flatten())
+            ineq, eq = kinsol.configuration_constraint_from_polygon(polygon)
+            P, jac = kinsol.forward_kinematics(sol.x)
+            pos = P[:, :3]
+            ineq, eq = polygon_to_trans_constraint(polygon)
+            assert ineq.is_satisfying(pos.flatten())
+            assert eq.is_satisfying(pos.flatten())
