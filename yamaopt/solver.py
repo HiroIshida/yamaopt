@@ -11,16 +11,18 @@ from yamaopt.utils import scipinize
 
 @attr.s # like a dataclass in python3
 class SolverConfig(object):
+    use_base = attr.ib()
     urdf_path = attr.ib()
     optimization_frame = attr.ib()
     control_joint_names = attr.ib()
     endeffector_link_name = attr.ib()
 
     @classmethod
-    def from_config_path(cls, config_path):
+    def from_config_path(cls, config_path, use_base=False):
         with open(config_path, 'r') as f:
             cfg = yaml.safe_load(f)
         return cls(
+                use_base,
                 urdf_path = cfg['urdf_path'],
                 optimization_frame = cfg['optimization_frame'],
                 control_joint_names = cfg['control_joint_names'],
@@ -33,18 +35,21 @@ class KinematicSolver:
 
         self.config = config
         self.control_joint_ids = self.kin.get_joint_ids(config.control_joint_names)
-        self.joint_limits = self.kin.get_joint_limits(self.control_joint_ids)
+        joint_limits = self.kin.get_joint_limits(self.control_joint_ids)
+        if self.config.use_base:
+            joint_limits.extend([[None, None]] * 3) # for x, y, theta
+        self.joint_limits = joint_limits
         self.end_effector_id = self.kin.get_link_ids([config.endeffector_link_name])[0]
 
     @property
-    def dof(self): return len(self.control_joint_ids)
+    def dof(self): return len(self.control_joint_ids) + 3 * (self.config.use_base)
 
     # TODO lru cache
     def forward_kinematics(self, q):
         assert isinstance(q, np.ndarray) and q.ndim == 1
         with_jacobian = True 
         use_rotation = True
-        use_base = False
+        use_base = self.config.use_base
         
         link_ids = [self.end_effector_id]
         joint_ids = self.control_joint_ids
@@ -92,6 +97,10 @@ class KinematicSolver:
         return ineq_constraint, eq_constraint
 
     def solve(self, q_init, np_polygon, target_obs_pos):
+        if self.config.use_base:
+            q_init = np.hstack((q_init, np.zeros(3)))
+        assert len(q_init) == self.dof
+
         f_ineq, f_eq = self.configuration_constraint_from_polygon(np_polygon)
 
         eq_const_scipy, eq_const_jac_scipy = scipinize(f_eq)
