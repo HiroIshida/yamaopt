@@ -104,3 +104,23 @@ def test_solve():
             ineq, eq = polygon_to_trans_constraint(polygon)
             assert ineq.is_satisfying(pos.flatten())
             assert eq.is_satisfying(pos.flatten())
+
+def test_solve_multiple():
+    config_path = "./config/pr2_conf.yaml"
+    config = SolverConfig.from_config_path(config_path, use_base=True)
+    kinsol = KinematicSolver(config)
+
+    polygon1 = np.array([[1.0, -0.5, -0.5], [1.0, 0.5, -0.5], [1.0, 0.5, 0.5], [1.0, -0.5, 0.5]]) + np.array([0, 0, 1.0])
+    polygon2 = polygon1.dot(rotation_matrix(math.pi / 2.0, [0, 0, 1.0]).T)
+    polygon3 = polygon1.dot(rotation_matrix(-math.pi / 2.0, [0, 0, 1.0]).T)
+
+    polygons = [polygon1, polygon2, polygon3]
+    q_init = np.ones(7) * 0.3
+
+    target_obj_pos = np.array([-0.1, 0.7, 0.3])
+    sol, target_polygon = kinsol.solve_multiple(q_init, polygons, target_obj_pos)
+    np.testing.assert_equal(polygon2, target_polygon)
+
+    target_obj_pos = np.array([-0.1, -0.7, 0.3])
+    sol, target_polygon = kinsol.solve_multiple(q_init, polygons, target_obj_pos)
+    np.testing.assert_equal(polygon3, target_polygon)

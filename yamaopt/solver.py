@@ -129,3 +129,18 @@ class KinematicSolver:
         """
 
         return res
+
+    def solve_multiple(self, q_init, np_polygons, target_obs_pos):
+        """
+        np_polygons: List[np.ndarray]
+        """
+        min_cost = np.inf
+        min_sol = None
+        target_polygon = None
+        for np_polygon in np_polygons:
+            sol = self.solve(q_init, np_polygon, target_obs_pos)
+            if sol.success and sol.fun < min_cost:
+                min_cost = sol.fun
+                min_sol = sol
+                target_polygon = np_polygon
+        return min_sol, target_polygon
