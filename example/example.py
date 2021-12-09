@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import argparse
 import os
 import time
 import trimesh
@@ -44,7 +45,20 @@ class VisManager:
             self.viewer.redraw()
 
 if __name__=='__main__':
-    config_path = "../config/pr2_conf.yaml"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-robot', type=str, default='fetch', help='robot name')
+    parser.add_argument('--visualize', action='store_true', help='visualize')
+    args = parser.parse_args()
+    robot_name = args.robot
+    visualize = args.visualize
+
+    if robot_name == 'fetch':
+        config_path = "../config/fetch_conf.yaml"
+    elif robot_name == 'pr2':
+        config_path = "../config/pr2_conf.yaml"
+    else:
+        raise Exception()
+
 
     config = SolverConfig.from_config_path(config_path)
     kinsol = KinematicSolver(config)
@@ -53,12 +67,13 @@ if __name__=='__main__':
     polygon += np.array([0.3, -0.7, 0.7])
     target_pos = np.array([-0.3, -0.6, 1.6])
 
-    sol = kinsol.solve(-np.ones(7)*0.4, polygon, target_pos)
+    sol = kinsol.solve(-np.ones(kinsol.dof)*0.4, polygon, target_pos)
     assert sol.success
 
-    # visualize
-    vm = VisManager(config)
-    vm.add_polygon(polygon)
-    vm.add_target(target_pos)
-    vm.set_angle_vector(sol.x)
-    vm.show_while()
+    if visualize:
+        # visualize
+        vm = VisManager(config)
+        vm.add_polygon(polygon)
+        vm.add_target(target_pos)
+        vm.set_angle_vector(sol.x)
+        vm.show_while()

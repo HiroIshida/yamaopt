@@ -36,6 +36,9 @@ class KinematicSolver:
         self.joint_limits = self.kin.get_joint_limits(self.control_joint_ids)
         self.end_effector_id = self.kin.get_link_ids([config.endeffector_link_name])[0]
 
+    @property
+    def dof(self): return len(self.control_joint_ids)
+
     # TODO lru cache
     def forward_kinematics(self, q):
         assert isinstance(q, np.ndarray) and q.ndim == 1
