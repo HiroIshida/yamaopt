@@ -40,3 +40,10 @@ jobs:
             - name: Run Pytest
               run: |
                   pytest -v tests
+
+            - name: Run example
+              run: |
+                  cd example
+                  python example.py -robot pr2
+                  python example.py -robot fetch
+
