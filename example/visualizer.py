@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import time
 import trimesh
 import skrobot
@@ -16,9 +17,32 @@ class VisManager:
         self.viewer = skrobot.viewers.TrimeshSceneViewer(resolution=(640, 480))
         self.viewer.add(robot)
 
+    def _convert_polygon_to_mesh(self, np_polygon):
+        vec0 = np_polygon[1] - np_polygon[0]
+        vec1 = np_polygon[2] - np_polygon[1]
+        tmp = np.cross(vec0, vec1)
+        n_vec = tmp / np.linalg.norm(tmp)
+        center = np.mean(np_polygon, axis=0)
+        #center_hover = center + n_vec -0.1
+
+        polygon_auged = np.vstack([np_polygon, np_polygon[0]])
+
+        faces = []
+        vertices = [center]
+        for i in range(len(polygon_auged)-1):
+            v0 = polygon_auged[i]
+            v1 = polygon_auged[i+1]
+            vertices.extend([v0, v1])
+            faces.append([0, len(vertices)-2, len(vertices)-1])
+
+
+        vertices = np.array(vertices)
+        return vertices, faces
+
     def add_polygon(self, np_polygon):
+        V, F = self._convert_polygon_to_mesh(np_polygon)
         mesh = visual_mesh=trimesh.Trimesh(
-                vertices=np_polygon, faces=[[0, 1, 2]], face_colors=[255, 0, 0, 200])
+                vertices=V, faces=F, face_colors=[255, 0, 0, 200])
         polygon_link = MeshLink(mesh)
         self.viewer.add(polygon_link)
 
