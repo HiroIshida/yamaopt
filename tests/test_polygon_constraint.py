@@ -1,5 +1,6 @@
 import numpy as np
 from skrobot.coordinates.math import rpy2quaternion
+from skrobot.coordinates.math import quaternion2matrix
 from yamaopt.polygon_constraint import is_convex, polygon_to_trans_constraint
 from yamaopt.polygon_constraint import polygon_to_desired_rpy
 
@@ -58,9 +59,17 @@ def test_polygon_to_constraint():
         assert np.all(Cineq(pt) > -1e-7)
 
 def test_polygon_to_desired_rpy():
-    polygon = simple_simplex()
-    rpy = polygon_to_desired_rpy(polygon)
-    q = rpy2quaternion(rpy)
-    print(q)
+    polygon1 = simple_simplex()
+    polygon2 = simple_square()
+    for polygon in [polygon1, polygon2]:
+        rpy = polygon_to_desired_rpy(polygon)
+        q = rpy2quaternion(np.flip(rpy))
+        matrix = quaternion2matrix(q)
+        z_axis = matrix[:, 0]
 
-
+        n_verts = len(polygon)
+        for i in range(n_verts):
+            p = polygon[i]
+            q = polygon[0] if i==n_verts-1 else polygon[i+1]
+            vec = p - q
+            assert abs(z_axis.dot(vec)) < 1e-5
