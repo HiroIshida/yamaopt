@@ -69,8 +69,8 @@ class KinematicSolver:
 
         return f
 
-    def configuration_constraint_from_polygon(self, np_polygon):
-        lin_ineq, lin_eq = polygon_to_trans_constraint(np_polygon)
+    def configuration_constraint_from_polygon(self, np_polygon, d_hover):
+        lin_ineq, lin_eq = polygon_to_trans_constraint(np_polygon, d_hover)
         rpy_desired = polygon_to_desired_rpy(np_polygon)
         print("desired")
         print(rpy_desired)
@@ -96,12 +96,12 @@ class KinematicSolver:
 
         return ineq_constraint, eq_constraint
 
-    def solve(self, q_init, np_polygon, target_obs_pos):
+    def solve(self, q_init, np_polygon, target_obs_pos, d_hover=0.0):
         if self.config.use_base:
             q_init = np.hstack((q_init, np.zeros(3)))
         assert len(q_init) == self.dof
 
-        f_ineq, f_eq = self.configuration_constraint_from_polygon(np_polygon)
+        f_ineq, f_eq = self.configuration_constraint_from_polygon(np_polygon, d_hover)
 
         eq_const_scipy, eq_const_jac_scipy = scipinize(f_eq)
         eq_dict = {'type': 'eq', 'fun': eq_const_scipy,
@@ -130,7 +130,7 @@ class KinematicSolver:
 
         return res
 
-    def solve_multiple(self, q_init, np_polygons, target_obs_pos):
+    def solve_multiple(self, q_init, np_polygons, target_obs_pos, d_hover=0.0):
         """
         np_polygons: List[np.ndarray]
         """
@@ -138,7 +138,7 @@ class KinematicSolver:
         min_sol = None
         target_polygon = None
         for np_polygon in np_polygons:
-            sol = self.solve(q_init, np_polygon, target_obs_pos)
+            sol = self.solve(q_init, np_polygon, target_obs_pos, d_hover=d_hover)
             if sol.success and sol.fun < min_cost:
                 min_cost = sol.fun
                 min_sol = sol

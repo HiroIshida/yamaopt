@@ -77,7 +77,7 @@ def polygon_to_desired_rpy(np_polygon):
     rpy = quaternion2rpy(matrix2quaternion(M))[0]
     return np.flip(rpy)
 
-def polygon_to_trans_constraint(np_polygon):
+def polygon_to_trans_constraint(np_polygon, d_hover):
     assert is_convex(np_polygon)
 
     normalize = lambda vec: vec/np.linalg.norm(vec)
@@ -89,7 +89,7 @@ def polygon_to_trans_constraint(np_polygon):
     # construct equality constraint
     p_whatever = points[0]
     A_eq = np.array([n_vec])
-    b_eq = np.array([n_vec.dot(p_whatever)])
+    b_eq = np.array([n_vec.dot(p_whatever) - d_hover])
     lineq = LinearEqConst(A_eq, b_eq)
 
     # construct inequality constraint

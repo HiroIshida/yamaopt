@@ -51,7 +51,7 @@ def test_constraint():
         np.testing.assert_almost_equal(jac_numel, jac_anal, decimal=4)
 
     polygon = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
-    ineq_const, eq_const = kinsol.configuration_constraint_from_polygon(polygon)
+    ineq_const, eq_const = kinsol.configuration_constraint_from_polygon(polygon, d_hover=0.0)
     for _ in range(10):
         q_test = np.random.randn(len(kinsol.control_joint_ids))
         _test_constraint_jacobian(ineq_const, q_test)
@@ -89,19 +89,21 @@ def test_solve():
         polygon3 = np.array([[0.7, 0.7, 0.0], [0.9, 0.5, 0.3], [0.5, 0.9, 0.3]])
         polygon3 += np.array([-0.4, -0.3, 0.9])
 
+        d_hover = 0.1
+
         #for i, polygon in enumerate([polygon1, polygon2, polygon3]):
         for i, polygon in enumerate([polygon1, polygon2]):
             q_init = np.ones(7) * 0.3
             target_obj_pos = np.ones(3)
 
-            sol = kinsol.solve(q_init, polygon, target_obj_pos)
+            sol = kinsol.solve(q_init, polygon, target_obj_pos, d_hover=d_hover)
             assert sol.success 
             assert len(sol.x) == 7 + 3 * use_base
 
-            ineq, eq = kinsol.configuration_constraint_from_polygon(polygon)
+            ineq, eq = kinsol.configuration_constraint_from_polygon(polygon, d_hover)
             P, jac = kinsol.forward_kinematics(sol.x)
             pos = P[:, :3]
-            ineq, eq = polygon_to_trans_constraint(polygon)
+            ineq, eq = polygon_to_trans_constraint(polygon, d_hover)
             assert ineq.is_satisfying(pos.flatten())
             assert eq.is_satisfying(pos.flatten())
 
