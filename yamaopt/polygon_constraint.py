@@ -9,7 +9,7 @@ class LinearEqConst(object):
     A = attr.ib()
     b = attr.ib()
     def __call__(self, x): return self.A.dot(x) - self.b 
-    def is_satisfying(self, x): return np.all(np.abs(self.__call__(x)) < 1e-7)
+    def is_satisfying(self, x): return np.all(np.abs(self.__call__(x)) < 1e-3)
 
 @attr.s
 class LinearIneqConst(object):
@@ -17,7 +17,7 @@ class LinearIneqConst(object):
     A = attr.ib()
     b = attr.ib()
     def __call__(self, x): return self.A.dot(x) - self.b 
-    def is_satisfying(self, x): return np.all(self.__call__(x) > -1e-7)
+    def is_satisfying(self, x): return np.all(self.__call__(x) > -1e-3)
 
 def check_convexity_and_maybe_ammend(np_polygon):
     # TODO(HiroIshida) PR to jsk_pcl_ros

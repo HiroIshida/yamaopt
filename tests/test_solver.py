@@ -86,12 +86,12 @@ def test_solve():
         polygon1 += np.array([0.7, 0.0, 1.0])
 
         polygon2 = np.array([[0.5, -0.3, 0.0], [0.5, 0.3, 0.0], [0.0, 0.0, 0.6]])
-        polygon2 += np.array([0.4, 0.0, 0.8])
+        polygon2 += np.array([0.5, 0.0, 0.8])
 
         polygon3 = np.array([[0.7, 0.7, 0.0], [0.9, 0.5, 0.3], [0.5, 0.9, 0.3]])
         polygon3 += np.array([-0.4, -0.3, 0.9])
 
-        d_hover = 0.01
+        d_hover = 0.00
 
         #for i, polygon in enumerate([polygon1, polygon2, polygon3]):
         for i, polygon in enumerate([polygon1, polygon2]):
