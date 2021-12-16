@@ -89,7 +89,7 @@ def test_solve():
         polygon3 = np.array([[0.7, 0.7, 0.0], [0.9, 0.5, 0.3], [0.5, 0.9, 0.3]])
         polygon3 += np.array([-0.4, -0.3, 0.9])
 
-        d_hover = 0.1
+        d_hover = 0.01
 
         #for i, polygon in enumerate([polygon1, polygon2, polygon3]):
         for i, polygon in enumerate([polygon1, polygon2]):

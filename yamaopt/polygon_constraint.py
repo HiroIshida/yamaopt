@@ -83,9 +83,14 @@ def polygon_to_trans_constraint(np_polygon, d_hover):
     normalize = lambda vec: vec/np.linalg.norm(vec)
 
     points = np_polygon
-    points_auged = np.vstack([points, points[0]])
 
     n_vec = normalize(np.cross(points[2] - points[1], points[1] - points[0]))
+    if points[1].dot(n_vec) < 0.0:
+        # n_vec must not direct toward the robot
+        n_vec *= -1
+        points = np.flip(points, axis=0)
+    points_auged = np.vstack([points, points[0]])
+
     # construct equality constraint
     p_whatever = points[0]
     A_eq = np.array([n_vec])
@@ -99,7 +104,7 @@ def polygon_to_trans_constraint(np_polygon, d_hover):
         p_here = points_auged[i]
         p_next = points_auged[i+1]
         vec = p_next - p_here
-        n_vec_local = -normalize(np.cross(n_vec, vec))
+        n_vec_local = -normalize(np.cross(n_vec, vec)) # toward inside of the polygon
 
         # let q be a query point. Then ineq const is (q - p_here)^T \dot n_vec_local > 0
         A_local = np.array(n_vec_local)
