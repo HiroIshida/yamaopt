@@ -10,12 +10,14 @@ from visualizer import VisManager
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-robot', type=str, default='pr2', help='robot name')
+    parser.add_argument('-hover', type=float, default='0.05', help='hover distance')
     parser.add_argument('--visualize', action='store_true', help='visualize')
     parser.add_argument('--use_base', action='store_true', help='with base')
     args = parser.parse_args()
     robot_name = args.robot
     visualize = args.visualize
     use_base = args.use_base
+    d_hover = args.hover
 
     if robot_name == 'fetch':
         config_path = "../config/fetch_conf.yaml"
@@ -35,7 +37,7 @@ if __name__=='__main__':
     target_obj_pos = np.array([-0.1, 0.7, 0.3])
 
     q_init = -np.ones(len(kinsol.control_joint_ids)) * 0.4
-    sol, target_polygon = kinsol.solve_multiple(q_init, polygons, target_obj_pos)
+    sol, target_polygon = kinsol.solve_multiple(q_init, polygons, target_obj_pos, d_hover=d_hover)
     assert sol.success
 
     if visualize:
