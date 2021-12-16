@@ -64,10 +64,10 @@ def test_polygon_to_desired_rpy():
     polygon1 = simple_simplex()
     polygon2 = simple_square()
     P = np.array([[1.0, -0.5, -0.5], [1.0, 0.5, -0.5], [1.0, 0.5, 0.5], [1.0, -0.5, 0.5]]) + np.array([0, 0, 1.0])
-    polygon3 = P.dot(rotation_matrix(math.pi / 2.0, [0, 0, 1.0]).T)
+    polygon3 = P.dot(rotation_matrix(math.pi * 0.7 / 2.0, [0, 0, 1.0]).T)
     polygon4 = P.dot(rotation_matrix(-math.pi / 2.0, [0, 0, 1.0]).T)
 
-    for polygon in [polygon1, polygon2, polygon3]:
+    for polygon in [polygon1, polygon2, polygon3, polygon4]:
         rpy = polygon_to_desired_rpy(polygon)
         q = rpy2quaternion(np.flip(rpy))
         matrix = quaternion2matrix(q)
