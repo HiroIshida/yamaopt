@@ -6,6 +6,8 @@ from numpy.lib.twodim_base import eye
 from yamaopt.solver import KinematicSolver, SolverConfig
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
 
+np.random.seed(1)
+
 def compute_numerical_jacobian(f, x0):
     f0 = f(x0)
 
