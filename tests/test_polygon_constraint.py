@@ -1,6 +1,8 @@
 import numpy as np
+import math
 from skrobot.coordinates.math import rpy2quaternion
 from skrobot.coordinates.math import quaternion2matrix
+from skrobot.coordinates.math import rotation_matrix
 from yamaopt.polygon_constraint import is_convex, polygon_to_trans_constraint
 from yamaopt.polygon_constraint import polygon_to_desired_rpy
 
@@ -61,7 +63,11 @@ def test_polygon_to_constraint():
 def test_polygon_to_desired_rpy():
     polygon1 = simple_simplex()
     polygon2 = simple_square()
-    for polygon in [polygon1, polygon2]:
+    P = np.array([[1.0, -0.5, -0.5], [1.0, 0.5, -0.5], [1.0, 0.5, 0.5], [1.0, -0.5, 0.5]]) + np.array([0, 0, 1.0])
+    polygon3 = P.dot(rotation_matrix(math.pi / 2.0, [0, 0, 1.0]).T)
+    polygon4 = P.dot(rotation_matrix(-math.pi / 2.0, [0, 0, 1.0]).T)
+
+    for polygon in [polygon1, polygon2, polygon3]:
         rpy = polygon_to_desired_rpy(polygon)
         q = rpy2quaternion(np.flip(rpy))
         matrix = quaternion2matrix(q)
