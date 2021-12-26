@@ -33,7 +33,8 @@ if __name__=='__main__':
     polygon1 = np.array([[1.0, -0.5, -0.5], [1.0, 0.5, -0.5], [1.0, 0.5, 0.5], [1.0, -0.5, 0.5]]) + np.array([0, 0, 1.0])
     polygon2 = polygon1.dot(rotation_matrix(math.pi / 2.0, [0, 0, 1.0]).T)
     polygon3 = polygon1.dot(rotation_matrix(-math.pi / 2.0, [0, 0, 1.0]).T)
-    polygons = [polygon1, polygon2, polygon3]
+    polygon4 = np.array([[1.0, 0.2, 0.2], [1.0, 0.5, -0.5], [1.0, 0.5, 0.5], [1.0, -0.5, 0.5]]) + np.array([0, 0, 1.0])
+    polygons = [polygon1, polygon2, polygon3, polygon4]
     target_obj_pos = np.array([-0.1, 0.7, 0.3])
 
     q_init = -np.ones(len(kinsol.control_joint_ids)) * 0.4
