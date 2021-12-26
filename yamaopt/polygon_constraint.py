@@ -19,6 +19,10 @@ class LinearIneqConst(object):
     def __call__(self, x): return self.A.dot(x) - self.b 
     def is_satisfying(self, x): return np.all(self.__call__(x) > -1e-3)
 
+class ConcavePolygonException(Exception):
+    """Raised when the polygon is concave (not convex)"""
+    pass
+
 def check_convexity_and_maybe_ammend(np_polygon):
     # TODO(HiroIshida) PR to jsk_pcl_ros
     # to circumvent jsk_pcl_ros's bag. Ad-hoc fix to convert non-convex to convex
@@ -54,7 +58,8 @@ def is_convex(np_polygon):
     return np.all(sign_list > 0) or np.all(sign_list < 0)
 
 def polygon_to_desired_rpy(np_polygon):
-    assert is_convex(np_polygon)
+    if not is_convex(np_polygon):
+        raise ConcavePolygonException
     normalize = lambda vec: vec/np.linalg.norm(vec)
     strip_z = lambda vec: np.array([vec[0], vec[1], 0.0])
     points = np_polygon
@@ -78,7 +83,8 @@ def polygon_to_desired_rpy(np_polygon):
     return np.flip(rpy)
 
 def polygon_to_trans_constraint(np_polygon, d_hover):
-    assert is_convex(np_polygon)
+    if not is_convex(np_polygon):
+        raise ConcavePolygonException
 
     normalize = lambda vec: vec/np.linalg.norm(vec)
 

@@ -44,8 +44,10 @@ jobs:
             - name: Run example
               run: |
                   cd example
+                  # Check robot options and use_base options
                   python example.py -robot pr2
                   python example.py -robot fetch
                   python example.py -robot pr2 --use_base
                   python example.py -robot fetch --use_base
-
+                  # Check concave polygon input
+                  python example_multi.py -robot pr2
