@@ -1,3 +1,4 @@
+import copy
 import os
 import numpy as np
 import time
@@ -39,12 +40,21 @@ class VisManager:
         vertices = np.array(vertices)
         return vertices, faces
 
-    def add_polygon(self, np_polygon):
-        V, F = self._convert_polygon_to_mesh(np_polygon)
-        mesh = visual_mesh=trimesh.Trimesh(
-                vertices=V, faces=F, face_colors=[255, 0, 0, 200])
-        polygon_link = MeshLink(mesh)
-        self.viewer.add(polygon_link)
+    def add_polygon(self, np_polygon, flip_and_append=True):
+        if flip_and_append:
+            # Currently, polygons are only visible from one side
+            # Flip and append the polygon so that it is visible from both sides
+            np_polygon_mirror = copy.deepcopy(np_polygon)
+            np_polygon_mirror = np_polygon_mirror[::-1]
+            np_polygon = [np_polygon, np_polygon_mirror]
+        else:
+            np_polygon = [np_polygon]
+        for p in np_polygon:
+            V, F = self._convert_polygon_to_mesh(p)
+            mesh = visual_mesh=trimesh.Trimesh(
+                    vertices=V, faces=F, face_colors=[255, 0, 0, 200])
+            polygon_link = MeshLink(mesh)
+            self.viewer.add(polygon_link)
 
     def add_polygon_list(self, np_polygon_list):
         for np_polygon in np_polygon_list:
