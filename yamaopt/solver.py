@@ -5,9 +5,9 @@ import yaml
 import numpy as np
 import scipy.optimize
 
-from yamaopt.polygon_constraint import is_convex
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
 from yamaopt.polygon_constraint import polygon_to_desired_rpy
+from yamaopt.polygon_constraint import ConcavePolygonException
 from yamaopt.utils import scipinize
 
 @attr.s # like a dataclass in python3
@@ -146,6 +146,6 @@ class KinematicSolver:
                     min_cost = sol.fun
                     min_sol = sol
                     target_polygon = np_polygon
-            except AssertionError:
+            except ConcavePolygonException:
                 print("Input polygon is not convex. Skipped.")
         return min_sol, target_polygon
