@@ -47,7 +47,6 @@ if __name__=='__main__':
     if visualize:
         # visualize
         vm = VisManager(config)
-        vm.add_polygon_list(polygons)
         vm.add_target(target_obj_pos)
-        vm.set_angle_vector(sol.x)
+        vm.reflect_solver_result(sol, polygons)
         vm.show_while()
