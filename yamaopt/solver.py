@@ -148,4 +148,7 @@ class KinematicSolver:
                     target_polygon = np_polygon
             except ConcavePolygonException:
                 print("Input polygon is not convex. Skipped.")
+            except ValueError as e:
+                print(e)
+                print("Can't calculate polygon rpy. Skipped.")
         return min_sol, target_polygon
