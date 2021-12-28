@@ -11,6 +11,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-robot', type=str, default='pr2', help='robot name')
     parser.add_argument('-hover', type=float, default='0.05', help='hover distance')
+    parser.add_argument('-margin', type=float, default='5.0', help='joint limit margin [deg]')
     parser.add_argument('--visualize', action='store_true', help='visualize')
     parser.add_argument('--use_base', action='store_true', help='with base')
     args = parser.parse_args()
@@ -18,6 +19,7 @@ if __name__=='__main__':
     visualize = args.visualize
     use_base = args.use_base
     d_hover = args.hover
+    joint_limit_margin = args.margin
 
     if robot_name == 'fetch':
         config_path = "../config/fetch_conf.yaml"
@@ -38,7 +40,8 @@ if __name__=='__main__':
     target_obj_pos = np.array([-0.1, 0.7, 0.3])
 
     q_init = -np.ones(len(kinsol.control_joint_ids)) * 0.4
-    sol, target_polygon = kinsol.solve_multiple(q_init, polygons, target_obj_pos, d_hover=d_hover)
+    sol, target_polygon = kinsol.solve_multiple(q_init, polygons, target_obj_pos, 
+            d_hover=d_hover, joint_limit_margin=joint_limit_margin)
     assert sol.success
 
     if visualize:
