@@ -15,6 +15,36 @@ def simple_square():
 def simple_nonconvex():
     return np.array([[0, 0., 0.], [1., 0., 0.], [0.5, 0.5, 0.], [1., 1., 0], [0, 1., 0]])
 
+def polygon_obtained_from_realdata1():
+     return np.array([
+         [2.60505462, 4.59755898, 2.5375905 ],
+         [3.1920166,  5.30614328, 2.55484033],
+         [3.06300306, 3.78255534, 2.52286839],
+         [3.02821851, 3.71375966, 2.52129412],
+         [2.70107746, 3.2760582,  2.51079869],
+         [2.06922889, 2.51521301, 2.49226928],
+         [1.93402052, 2.35808706, 2.48842144],
+         [1.65947723, 2.05265594, 2.48088861],
+         [1.64845598, 2.46919489, 2.48942041],
+         [1.63589311, 2.96116042, 2.49949908],
+         [1.65137935, 2.98785305, 2.50011897],
+         [1.8108511,  3.25971055, 2.5064404 ]])
+
+def polygon_obtained_from_realdata2():
+    return np.array([
+         [2.60505462, 4.59755898, 2.5375905 ],
+         [3.1920166 , 5.30614328, 2.55484033],
+         [3.06300306, 3.78255534, 2.52286839],
+         [3.02821851, 3.71375966, 2.52129412],
+         [2.70107746, 3.2760582 , 2.51079869],
+         [2.06922889, 2.51521301, 2.49226928],
+         [1.93402052, 2.35808706, 2.48842144],
+         [1.65947723, 2.05265594, 2.48088861],
+         [1.64845598, 2.46919489, 2.48942041],
+         [1.63589311, 2.96116042, 2.49949908],
+         [1.65137935, 2.98785305, 2.50011897],
+         [1.8108511 , 3.25971055, 2.5064404 ]])
+
 def test_is_convex():
     assert is_convex(simple_simplex())
     assert is_convex(simple_square())
@@ -67,8 +97,10 @@ def test_polygon_to_desired_rpy():
     P = np.array([[1.0, -0.5, -0.5], [1.0, 0.5, -0.5], [1.0, 0.5, 0.5], [1.0, -0.5, 0.5]]) + np.array([0, 0, 1.0])
     polygon3 = P.dot(rotation_matrix(math.pi * 0.7 / 2.0, [0, 0, 1.0]).T)
     polygon4 = P.dot(rotation_matrix(-math.pi / 2.0, [0, 0, 1.0]).T)
+    polygon5 = polygon_obtained_from_realdata1()
+    polygon6 = polygon_obtained_from_realdata2()
 
-    for polygon in [polygon1, polygon2, polygon3, polygon4]:
+    for polygon in [polygon1, polygon2, polygon3, polygon4, polygon5, polygon6]:
         rpy = polygon_to_desired_rpy(polygon)
         q = rpy2quaternion(np.flip(rpy))
         matrix = quaternion2matrix(q)
