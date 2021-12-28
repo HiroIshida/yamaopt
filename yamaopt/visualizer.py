@@ -4,7 +4,9 @@ import numpy as np
 import time
 import trimesh
 import skrobot
-from skrobot.model.primitives import MeshLink, Sphere
+from skrobot.coordinates import Coordinates
+from skrobot.coordinates.math import rpy_matrix
+from skrobot.model.primitives import MeshLink, Sphere, Axis
 from skrobot.planner.utils import set_robot_config
 
 class VisManager:
@@ -70,6 +72,16 @@ class VisManager:
         self.set_angle_vector(solver_result.x)
 
         # add axis indicating sensor placement pose
+        xyzrpy = solver_result.end_coords
+        pos = xyzrpy[:3]
+        ypr = np.flip(xyzrpy[3:])
+        coords = Coordinates(pos, rpy_matrix(*ypr))
+        hover_axis = Axis(pos=coords.worldpos(), rot=coords.worldrot())
+        self.viewer.add(hover_axis)
+
+        sensor_axis = copy.deepcopy(hover_axis)
+        sensor_axis.translate([solver_result._d_hover, 0.0, 0.0])
+        self.viewer.add(sensor_axis)
 
         # add polygons which sensor will NOT be placed
         for polygon in filter(
