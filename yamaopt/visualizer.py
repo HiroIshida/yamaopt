@@ -16,7 +16,9 @@ class VisManager:
         self.config = config
         self.robot = robot
         self.viewer = skrobot.viewers.TrimeshSceneViewer(resolution=(640, 480))
-        self.viewer.add(robot)
+        self.add_robot(robot)
+        if config.use_base:
+            self.add_robot(copy.deepcopy(robot))
 
     def _convert_polygon_to_mesh(self, np_polygon):
         vec0 = np_polygon[1] - np_polygon[0]
@@ -39,6 +41,9 @@ class VisManager:
 
         vertices = np.array(vertices)
         return vertices, faces
+
+    def add_robot(self, robot):
+        self.viewer.add(robot)
 
     def add_polygon(self, np_polygon, flip_and_append=True):
         if flip_and_append:
