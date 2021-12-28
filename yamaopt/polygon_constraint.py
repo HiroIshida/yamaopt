@@ -1,7 +1,7 @@
 import attr
 import numpy as np
 from skrobot.coordinates.math import matrix2quaternion
-from skrobot.coordinates.math import quaternion2rpy
+from skrobot.coordinates.math import rpy_angle
 
 @attr.s # like a dataclass in python3
 class LinearEqConst(object):
@@ -79,8 +79,9 @@ def polygon_to_desired_rpy(np_polygon):
         z_axis *= -1
         
     M = np.vstack([x_axis, y_axis, z_axis]).T
-    rpy = quaternion2rpy(matrix2quaternion(M))[0]
-    return np.flip(rpy)
+    ypr = rpy_angle(M)[0]
+    rpy = np.flip(ypr)
+    return rpy
 
 def polygon_to_trans_constraint(np_polygon, d_hover):
     if not is_convex(np_polygon):
