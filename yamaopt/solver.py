@@ -29,6 +29,18 @@ class SolverConfig(object):
                 control_joint_names = cfg['control_joint_names'],
                 endeffector_link_name = cfg['endeffector_link_name'])
 
+@attr.s # like a dataclass in python3
+class SolverResult(object):
+    success = attr.ib()
+    x = attr.ib()
+    fun = attr.ib()
+
+    # additional infos
+    end_coords = attr.ib()
+    target_polygon = attr.ib()
+    _d_hover = attr.ib()
+    _sol_scipy = attr.ib()
+
 class KinematicSolver:
     def __init__(self, config):
         urdf_path = os.path.expanduser(config.urdf_path)
@@ -115,7 +127,7 @@ class KinematicSolver:
 
         f, jac = scipinize(f_obj)
 
-        res = scipy.optimize.minimize(
+        sol = scipy.optimize.minimize(
             f, q_init, method='SLSQP', jac=jac,
             constraints=[eq_dict, ineq_dict], bounds=self.joint_limits)
 
@@ -128,8 +140,7 @@ class KinematicSolver:
             q_seq = [q_init + dq * i for i in range(n_seq)]
             vis.visualize_sequence(q_seq)
         """
-
-        return res
+        return self._create_solver_result_from_scipy_sol(sol, np_polygon, d_hover)
 
     def solve_multiple(self, q_init, np_polygons, target_obs_pos, d_hover=0.0):
         """
@@ -148,4 +159,10 @@ class KinematicSolver:
                     target_polygon = np_polygon
             except ConcavePolygonException:
                 print("Input polygon is not convex. Skipped.")
-        return min_sol, target_polygon
+        result = self._create_solver_result_from_scipy_sol(min_sol, target_polygon, d_hover)
+        return result
+
+    def _create_solver_result_from_scipy_sol(self, sol_scipy, target_polygon, d_hover):
+        poses, _ = self.forward_kinematics(sol_scipy.x)
+        pose = poses[0]
+        return SolverResult(sol_scipy.success, sol_scipy.x, sol_scipy.fun, pose, target_polygon, d_hover, sol_scipy)

@@ -122,9 +122,9 @@ def test_solve_multiple():
     q_init = np.ones(7) * 0.3
 
     target_obj_pos = np.array([-0.1, 0.7, 0.3])
-    sol, target_polygon = kinsol.solve_multiple(q_init, polygons, target_obj_pos)
-    np.testing.assert_equal(polygon2, target_polygon)
+    sol = kinsol.solve_multiple(q_init, polygons, target_obj_pos)
+    np.testing.assert_equal(polygon2, sol.target_polygon)
 
     target_obj_pos = np.array([-0.1, -0.7, 0.3])
-    sol, target_polygon = kinsol.solve_multiple(q_init, polygons, target_obj_pos)
-    np.testing.assert_equal(polygon3, target_polygon)
+    sol = kinsol.solve_multiple(q_init, polygons, target_obj_pos)
+    np.testing.assert_equal(polygon3, sol.target_polygon)
