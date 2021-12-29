@@ -1,9 +1,16 @@
 import os
+import math
+import copy
 import attr
 from tinyfk import RobotModel
 import yaml
 import numpy as np
 import scipy.optimize
+import skrobot
+from skrobot.model.joint import RotationalJoint
+from skrobot.model.joint import FixedJoint
+from skrobot.model.joint import LinearJoint
+from skrobot.model.joint import OmniWheelJoint
 
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
 from yamaopt.polygon_constraint import polygon_to_desired_rpy
@@ -19,27 +26,41 @@ class SolverConfig(object):
     endeffector_link_name = attr.ib()
 
     @classmethod
-    def from_config_path(cls, config_path, use_base=False):
+    def from_config_path(cls, 
+            config_path, 
+            use_base=False, 
+            joint_limit_margin=None # [degree] or None
+            ):
         with open(config_path, 'r') as f:
             cfg = yaml.safe_load(f)
+
         return cls(
                 use_base,
                 urdf_path = cfg['urdf_path'],
                 optimization_frame = cfg['optimization_frame'],
                 control_joint_names = cfg['control_joint_names'],
-                endeffector_link_name = cfg['endeffector_link_name'])
+                endeffector_link_name = cfg['endeffector_link_name'],
+                )
 
 class KinematicSolver:
     def __init__(self, config):
         urdf_path = os.path.expanduser(config.urdf_path)
         self.kin = RobotModel(urdf_path)
 
+        robot_model = skrobot.model.RobotModel() # Here this model is used only for obtaining joint type (as an urdf parser)
+        robot_model.load_urdf_file(urdf_path)
+
         self.config = config
         self.control_joint_ids = self.kin.get_joint_ids(config.control_joint_names)
         joint_limits = self.kin.get_joint_limits(self.control_joint_ids)
+        joint_types = [type(robot_model.__dict__[jn]) for jn in config.control_joint_names]
+
         if self.config.use_base:
             joint_limits.extend([[None, None]] * 3) # for x, y, theta
+            joint_types.extend([LinearJoint, LinearJoint, RotationalJoint])
+
         self.joint_limits = joint_limits
+        self.joint_types = joint_types
         self.end_effector_id = self.kin.get_link_ids([config.endeffector_link_name])[0]
 
     @property
@@ -97,7 +118,7 @@ class KinematicSolver:
 
         return ineq_constraint, eq_constraint
 
-    def solve(self, q_init, np_polygon, target_obs_pos, d_hover=0.0):
+    def solve(self, q_init, np_polygon, target_obs_pos, d_hover=0.0, joint_limit_margin=0.0):
         if self.config.use_base:
             q_init = np.hstack((q_init, np.zeros(3)))
         assert len(q_init) == self.dof
@@ -115,9 +136,21 @@ class KinematicSolver:
 
         f, jac = scipinize(f_obj)
 
+        joint_limits_tight = copy.deepcopy(self.joint_limits)
+        margin = joint_limit_margin * math.pi / 180.0
+        for i in range(len(joint_limits_tight)):
+            joint_type = self.joint_types[i]
+            if joint_type == LinearJoint:
+                continue
+
+            is_infinite_rotational_joint = (None in joint_limits_tight[i])
+            if not is_infinite_rotational_joint:
+                joint_limits_tight[i][0] += margin # tighten lower bound
+                joint_limits_tight[i][1] -= margin # tighten upper bound
+
         res = scipy.optimize.minimize(
             f, q_init, method='SLSQP', jac=jac,
-            constraints=[eq_dict, ineq_dict], bounds=self.joint_limits)
+            constraints=[eq_dict, ineq_dict], bounds=joint_limits_tight)
 
         """
         if output_gif:
@@ -131,7 +164,7 @@ class KinematicSolver:
 
         return res
 
-    def solve_multiple(self, q_init, np_polygons, target_obs_pos, d_hover=0.0):
+    def solve_multiple(self, q_init, np_polygons, target_obs_pos, d_hover=0.0, joint_limit_margin=0.0):
         """
         np_polygons: List[np.ndarray]
         """
@@ -141,7 +174,7 @@ class KinematicSolver:
         for np_polygon in np_polygons:
             try:
                 sol = self.solve(
-                    q_init, np_polygon, target_obs_pos, d_hover=d_hover)
+                    q_init, np_polygon, target_obs_pos, d_hover=d_hover, joint_limit_margin=joint_limit_margin)
                 if sol.success and sol.fun < min_cost:
                     min_cost = sol.fun
                     min_sol = sol
