@@ -48,5 +48,5 @@ if __name__=='__main__':
         # visualize
         vm = VisManager(config)
         vm.add_target(target_obj_pos)
-        vm.reflect_solver_result(sol, polygons)
+        vm.reflect_solver_result(sol, polygons, show_polygon_axis=True)
         vm.show_while()
