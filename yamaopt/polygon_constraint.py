@@ -58,8 +58,6 @@ def is_convex(np_polygon):
     return np.all(sign_list > 0) or np.all(sign_list < 0)
 
 def polygon_to_desired_rpy(np_polygon):
-    if not is_convex(np_polygon):
-        raise ConcavePolygonException
     normalize = lambda vec: vec/np.linalg.norm(vec)
     strip_z = lambda vec: np.array([vec[0], vec[1], 0.0])
     points = np_polygon
