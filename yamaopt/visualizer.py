@@ -8,6 +8,8 @@ from skrobot.coordinates import Coordinates
 from skrobot.coordinates.math import rpy_matrix
 from skrobot.model.primitives import MeshLink, Sphere, Axis
 from skrobot.planner.utils import set_robot_config
+from yamaopt.polygon_constraint import polygon_to_desired_rpy
+from yamaopt.polygon_constraint import ConcavePolygonException
 
 class VisManager:
     def __init__(self, config):
@@ -47,7 +49,14 @@ class VisManager:
     def add_robot(self, robot):
         self.viewer.add(robot)
 
-    def add_polygon(self, np_polygon, flip_and_append=True, rgba=[255, 0, 0, 200]):
+    def add_polygon(
+            self, np_polygon,
+            flip_and_append=True, rgba=[255, 0, 0, 200], show_axis=False):
+        if show_axis:
+            polygon_axis = Axis(
+                pos=np.mean(np_polygon, axis=0),
+                rot=polygon_to_desired_rpy(np_polygon))
+            self.viewer.add(polygon_axis)
         if flip_and_append:
             # Currently, polygons are only visible from one side
             # Flip and append the polygon so that it is visible from both sides
@@ -67,7 +76,8 @@ class VisManager:
         target_sphere_link = Sphere(0.05, pos=target_pos, color=[0, 0, 255])
         self.viewer.add(target_sphere_link)
 
-    def reflect_solver_result(self, solver_result, np_polygon_list):
+    def reflect_solver_result(
+            self, solver_result, np_polygon_list, show_polygon_axis=False):
         # change visual robot configuration
         self.set_angle_vector(solver_result.x)
 
@@ -87,10 +97,12 @@ class VisManager:
         for polygon in filter(
                 lambda arr: not np.array_equal(arr, solver_result.target_polygon), 
                 np_polygon_list):
-            self.add_polygon(polygon)
+            self.add_polygon(polygon, show_axis=show_polygon_axis)
 
         # add polygon which sensor will be placed
-        self.add_polygon(solver_result.target_polygon, rgba=[0, 255, 0, 255])
+        self.add_polygon(
+            solver_result.target_polygon,
+            rgba=[0, 255, 0, 255], show_axis=show_polygon_axis)
 
     def set_angle_vector(self, q):
         joints = [self.robot.__dict__[name] for name in self.config.control_joint_names]
