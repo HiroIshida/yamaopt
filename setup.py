@@ -5,7 +5,7 @@ setup_requires = []
 install_requires = [
         "numpy",
         "attrs",
-        "scipy",
+        "scipy==0.19.1",  # To fail tests
         "tinyfk>=0.4.4",
         "scikit-robot>=0.0.15",
         ]
