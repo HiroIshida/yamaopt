@@ -191,7 +191,7 @@ class KinematicSolver:
                     min_sol = sol
                     target_polygon = np_polygon
             except ConcavePolygonException:
-                print("Input polygon is not convex. Skipped.")
+                print("Input polygon is not convex. Skip optimization.")
         result = self._create_solver_result_from_scipy_sol(min_sol, target_polygon, d_hover)
         return result
 
