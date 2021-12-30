@@ -53,9 +53,10 @@ class VisManager:
             self, np_polygon,
             flip_and_append=True, rgba=[255, 0, 0, 200], show_axis=False):
         if show_axis:
-            polygon_axis = Axis(
-                pos=np.mean(np_polygon, axis=0),
-                rot=polygon_to_desired_rpy(np_polygon))
+            pos = np.mean(np_polygon, axis=0)
+            ypr = np.flip(polygon_to_desired_rpy(np_polygon))
+            coords = Coordinates(pos, ypr)
+            polygon_axis = Axis(pos=coords.worldpos(), rot=coords.worldrot())
             self.viewer.add(polygon_axis)
         if flip_and_append:
             # Currently, polygons are only visible from one side
