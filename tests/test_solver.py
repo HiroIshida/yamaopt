@@ -138,10 +138,10 @@ def test_solve_multiple_with_realistic_data():
 
     polygons = get_sample_real_polygons()
 
-    q_init = np.ones(7) * 0.3
+    q_init = -np.ones(len(kinsol.control_joint_ids)) * 0.4
 
     target_obj_pos = np.array([-0.1, 0.7, 0.3])
-    d_hover = 0.0
+    d_hover = 0.05
     sol = kinsol.solve_multiple(q_init, polygons, target_obj_pos, d_hover=d_hover)
     pos, rpy = sol.end_coords[:3], sol.end_coords[3:]
 
