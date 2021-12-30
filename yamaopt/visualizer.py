@@ -4,7 +4,9 @@ import numpy as np
 import time
 import trimesh
 import skrobot
-from skrobot.model.primitives import MeshLink, Sphere
+from skrobot.coordinates import Coordinates
+from skrobot.coordinates.math import rpy_matrix
+from skrobot.model.primitives import MeshLink, Sphere, Axis
 from skrobot.planner.utils import set_robot_config
 
 class VisManager:
@@ -45,7 +47,7 @@ class VisManager:
     def add_robot(self, robot):
         self.viewer.add(robot)
 
-    def add_polygon(self, np_polygon, flip_and_append=True):
+    def add_polygon(self, np_polygon, flip_and_append=True, rgba=[255, 0, 0, 200]):
         if flip_and_append:
             # Currently, polygons are only visible from one side
             # Flip and append the polygon so that it is visible from both sides
@@ -57,17 +59,38 @@ class VisManager:
         for p in np_polygon:
             V, F = self._convert_polygon_to_mesh(p)
             mesh = visual_mesh=trimesh.Trimesh(
-                    vertices=V, faces=F, face_colors=[255, 0, 0, 200])
+                    vertices=V, faces=F, face_colors=rgba)
             polygon_link = MeshLink(mesh)
             self.viewer.add(polygon_link)
-
-    def add_polygon_list(self, np_polygon_list):
-        for np_polygon in np_polygon_list:
-            self.add_polygon(np_polygon)
 
     def add_target(self, target_pos):
         target_sphere_link = Sphere(0.05, pos=target_pos, color=[0, 0, 255])
         self.viewer.add(target_sphere_link)
+
+    def reflect_solver_result(self, solver_result, np_polygon_list):
+        # change visual robot configuration
+        self.set_angle_vector(solver_result.x)
+
+        # add axis indicating sensor placement pose
+        xyzrpy = solver_result.end_coords
+        pos = xyzrpy[:3]
+        ypr = np.flip(xyzrpy[3:])
+        coords = Coordinates(pos, rpy_matrix(*ypr))
+        hover_axis = Axis(pos=coords.worldpos(), rot=coords.worldrot())
+        self.viewer.add(hover_axis)
+
+        sensor_axis = copy.deepcopy(hover_axis)
+        sensor_axis.translate([solver_result._d_hover, 0.0, 0.0])
+        self.viewer.add(sensor_axis)
+
+        # add polygons which sensor will NOT be placed
+        for polygon in filter(
+                lambda arr: not np.array_equal(arr, solver_result.target_polygon), 
+                np_polygon_list):
+            self.add_polygon(polygon)
+
+        # add polygon which sensor will be placed
+        self.add_polygon(solver_result.target_polygon, rgba=[0, 255, 0, 255])
 
     def set_angle_vector(self, q):
         joints = [self.robot.__dict__[name] for name in self.config.control_joint_names]

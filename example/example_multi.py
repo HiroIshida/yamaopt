@@ -40,14 +40,13 @@ if __name__=='__main__':
     target_obj_pos = np.array([-0.1, 0.7, 0.3])
 
     q_init = -np.ones(len(kinsol.control_joint_ids)) * 0.4
-    sol, target_polygon = kinsol.solve_multiple(q_init, polygons, target_obj_pos, 
-            d_hover=d_hover, joint_limit_margin=joint_limit_margin)
+    sol = kinsol.solve_multiple(q_init, polygons, target_obj_pos, 
+                                d_hover=d_hover, joint_limit_margin=joint_limit_margin)
     assert sol.success
 
     if visualize:
         # visualize
         vm = VisManager(config)
-        vm.add_polygon_list(polygons)
         vm.add_target(target_obj_pos)
-        vm.set_angle_vector(sol.x)
+        vm.reflect_solver_result(sol, polygons)
         vm.show_while()
