@@ -5,6 +5,7 @@ from skrobot.coordinates.math import rotation_matrix
 from numpy.lib.twodim_base import eye
 from yamaopt.solver import KinematicSolver, SolverConfig
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
+from data.sample_polygon import get_sample_real_polygons
 
 np.random.seed(1)
 
@@ -109,7 +110,7 @@ def test_solve():
             assert ineq.is_satisfying(pos.flatten())
             assert eq.is_satisfying(pos.flatten())
 
-def test_solve_multiple():
+def test_solve_multiple_with_artificial_data():
     config_path = "./config/pr2_conf.yaml"
     config = SolverConfig.from_config_path(config_path, use_base=True)
     kinsol = KinematicSolver(config)
@@ -128,3 +129,22 @@ def test_solve_multiple():
     target_obj_pos = np.array([-0.1, -0.7, 0.3])
     sol = kinsol.solve_multiple(q_init, polygons, target_obj_pos)
     np.testing.assert_equal(polygon3, sol.target_polygon)
+
+def test_solve_multiple_with_realistic_data():
+    # Test using real polygon obtained from PR2 in the kitchen
+    config_path = "./config/pr2_conf.yaml"
+    config = SolverConfig.from_config_path(config_path, use_base=True)
+    kinsol = KinematicSolver(config)
+
+    polygons = get_sample_real_polygons()
+
+    q_init = np.ones(7) * 0.3
+
+    target_obj_pos = np.array([-0.1, 0.7, 0.3])
+    d_hover = 0.0
+    sol = kinsol.solve_multiple(q_init, polygons, target_obj_pos, d_hover=d_hover)
+    pos, rpy = sol.end_coords[:3], sol.end_coords[3:]
+
+    ineq, eq = polygon_to_trans_constraint(sol.target_polygon, d_hover)
+    assert ineq.is_satisfying(pos)
+    assert eq.is_satisfying(pos)
