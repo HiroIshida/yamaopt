@@ -14,7 +14,7 @@ def compute_numerical_jacobian(f, x0):
 
     dim_inp = len(x0)
 
-    eps =1e-6
+    eps =1e-9
     one_hots = [vec * eps for vec in np.eye(dim_inp)]
 
     is_out_jacobian = isinstance(f0, np.ndarray)
