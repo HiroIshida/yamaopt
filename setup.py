@@ -3,7 +3,7 @@ from setuptools import setup
 setup_requires = []
 
 install_requires = [
-        "numpy",
+        "numpy>=1.16.6",
         "attrs",
         # https://github.com/HiroIshida/yamaopt/issues/18#issuecomment-1002915454
         "scipy>=1.2.0",
