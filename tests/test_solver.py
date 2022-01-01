@@ -55,8 +55,11 @@ def test_constraint():
 
     polygon = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
     ineq_const, eq_const = kinsol.configuration_constraint_from_polygon(polygon, d_hover=0.0)
-    for _ in range(10):
-        q_test = np.random.randn(len(kinsol.control_joint_ids))
+
+    q_tests = [np.random.randn(len(kinsol.control_joint_ids)) for _ in range(10)]
+    # append case that fails with coarse discretization
+    q_tests.append(np.array([-0.74996962, 2.0546241, 0.05340954, -0.4791571, 0.35016716,  0.01716473, -0.42914228])) 
+    for q_test in q_tests:
         _test_constraint_jacobian(ineq_const, q_test)
         _test_constraint_jacobian(eq_const, q_test)
 
