@@ -109,7 +109,7 @@ class KinematicSolver:
         print("desired")
         print(rpy_desired)
 
-        def ineq_constraint(q):
+        def hand_ineq_constraint(q):
             P_whole, J_whole = self.forward_kinematics(q)
             P_pos = P_whole[:, :3]
             J_pos = J_whole[:3, :]
@@ -117,7 +117,7 @@ class KinematicSolver:
             jac = lin_ineq.A.dot(J_pos)
             return val, jac
 
-        def eq_constraint(q):
+        def hand_eq_constraint(q):
             P_whole, J_whole = self.forward_kinematics(q)
             P_pos, P_rot = P_whole[:, :3], P_whole[:, 3:]
             J_pos, J_rot = J_whole[:3, :], J_whole[3:, :]
@@ -128,41 +128,71 @@ class KinematicSolver:
             jac_rot = J_rot
             return np.hstack([val_pos, val_rot]), np.vstack([jac_pos, jac_rot])
 
-        return ineq_constraint, eq_constraint
+        return hand_ineq_constraint, hand_eq_constraint
 
-    def solve(self, q_init, np_polygon, target_obs_pos, d_hover=0.0, joint_limit_margin=0.0):
+    def base_constraint_from_polygon(self, movable_polygon):
+        b_lin_ineq = polygon_to_trans_constraint(movable_polygon, d_hover=0.0)[0]
+
+        def base_ineq_constraint(q):
+            P = np.array([q[-3:]])
+            P[0][-1] = 0  # P = [x, y, theta=0]
+            J = np.zeros((3, len(q)))
+            J[0][-3] = 1.0
+            J[1][-2] = 1.0
+            val = ((b_lin_ineq.A.dot(P.T)).T - b_lin_ineq.b).flatten()
+            jac = b_lin_ineq.A.dot(J)
+            return val, jac
+
+        return base_ineq_constraint
+
+    def solve(self, q_init, np_polygon, target_obs_pos, movable_polygon=None,
+              d_hover=0.0, joint_limit_margin=0.0):
         if self.config.use_base:
             q_init = np.hstack((q_init, np.zeros(3)))
+        else:
+            print('WARNING: movable_polygon is given though use_base is False.')
+            movable_polygon = None  # Ignore movable area if use_base is False
         assert len(q_init) == self.dof
 
-        f_ineq, f_eq = self.configuration_constraint_from_polygon(np_polygon, d_hover)
-
+        # Constraint functions for hand
+        f_ineq, f_eq = self.configuration_constraint_from_polygon(
+            np_polygon, d_hover=d_hover)
         eq_const_scipy, eq_const_jac_scipy = scipinize(f_eq)
         eq_dict = {'type': 'eq', 'fun': eq_const_scipy,
                    'jac': eq_const_jac_scipy}
         ineq_const_scipy, ineq_const_jac_scipy = scipinize(f_ineq)
         ineq_dict = {'type': 'ineq', 'fun': ineq_const_scipy,
                      'jac': ineq_const_jac_scipy}
+        # Constraint functions for base
+        if movable_polygon is None:
+            cons = [eq_dict, ineq_dict]
+        else:
+            b_ineq = self.base_constraint_from_polygon(movable_polygon)
+            b_ineq_const_scipy, b_ineq_const_jac_scipy = scipinize(b_ineq)
+            b_ineq_dict = {'type': 'ineq', 'fun': b_ineq_const_scipy,
+                           'jac': b_ineq_const_jac_scipy}
+            cons = [eq_dict, ineq_dict, b_ineq_dict]
 
+        # Objective function
         f_obj = self.create_objective_function(target_obs_pos)
-
         f, jac = scipinize(f_obj)
 
+        # Bounds
         joint_limits_tight = copy.deepcopy(self.joint_limits)
         margin = joint_limit_margin * math.pi / 180.0
         for i in range(len(joint_limits_tight)):
             joint_type = self.joint_types[i]
             if joint_type == LinearJoint:
                 continue
-
             is_infinite_rotational_joint = (None in joint_limits_tight[i])
             if not is_infinite_rotational_joint:
                 joint_limits_tight[i][0] += margin # tighten lower bound
                 joint_limits_tight[i][1] -= margin # tighten upper bound
 
+        # Solve optimization
         sol = scipy.optimize.minimize(
             f, q_init, method='SLSQP', jac=jac,
-            constraints=[eq_dict, ineq_dict], bounds=joint_limits_tight)
+            constraints=cons, bounds=joint_limits_tight)
 
         """
         if output_gif:
@@ -175,7 +205,9 @@ class KinematicSolver:
         """
         return self._create_solver_result_from_scipy_sol(sol, np_polygon, d_hover)
 
-    def solve_multiple(self, q_init, np_polygons, target_obs_pos, d_hover=0.0, joint_limit_margin=0.0):
+    def solve_multiple(self, q_init, np_polygons, target_obs_pos,
+                       movable_polygon=None,
+                       d_hover=0.0, joint_limit_margin=0.0):
         """
         np_polygons: List[np.ndarray]
         """
@@ -185,7 +217,9 @@ class KinematicSolver:
         for np_polygon in np_polygons:
             try:
                 sol = self.solve(
-                    q_init, np_polygon, target_obs_pos, d_hover=d_hover, joint_limit_margin=joint_limit_margin)
+                    q_init, np_polygon, target_obs_pos,
+                    movable_polygon=movable_polygon,
+                    d_hover=d_hover, joint_limit_margin=joint_limit_margin)
                 if sol.success and sol.fun < min_cost:
                     min_cost = sol.fun
                     min_sol = sol
