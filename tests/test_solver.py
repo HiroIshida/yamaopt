@@ -41,17 +41,16 @@ def test_compute_numerical_jacobian():
     jac_real = np.array([x0 / np.sqrt(np.sum(x0 ** 2)), x0 / np.sqrt(np.sum(x0 ** 2))])
     np.testing.assert_almost_equal(jac_real, jac_numel, decimal=4)
 
+def _test_constraint_jacobian(constraint, q_test):
+    f = lambda q: constraint(q)[0]
+    jac_numel = compute_numerical_jacobian(f, q_test)
+    jac_anal = constraint(q_test)[1]
+    np.testing.assert_almost_equal(jac_numel, jac_anal, decimal=4)
 
-def test_constraint():
+def test_hand_constraint():
     config_path = "./config/pr2_conf.yaml"
     config = SolverConfig.from_config_path(config_path)
     kinsol = KinematicSolver(config)
-
-    def _test_constraint_jacobian(constraint, q_test):
-        f = lambda q: constraint(q)[0]
-        jac_numel = compute_numerical_jacobian(f, q_test)
-        jac_anal = constraint(q_test)[1]
-        np.testing.assert_almost_equal(jac_numel, jac_anal, decimal=4)
 
     polygon = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
     ineq_const, eq_const = kinsol.configuration_constraint_from_polygon(polygon, d_hover=0.0)
@@ -62,6 +61,18 @@ def test_constraint():
     for q_test in q_tests:
         _test_constraint_jacobian(ineq_const, q_test)
         _test_constraint_jacobian(eq_const, q_test)
+
+def test_base_constraint():
+    config_path = "./config/pr2_conf.yaml"
+    config = SolverConfig.from_config_path(config_path)
+    kinsol = KinematicSolver(config)
+
+    movable_polygon = np.array([[0.3, 0, 0], [0, 0.3, 0], [-0.3, 0, 0], [0, -0.3, 0]])
+    ineq_const = kinsol.base_constraint_from_polygon(movable_polygon)
+
+    q_tests = [np.random.randn(len(kinsol.control_joint_ids)) for _ in range(10)]
+    for q_test in q_tests:
+        _test_constraint_jacobian(ineq_const, q_test)
 
 def test_objfun():
     config_path = "./config/pr2_conf.yaml"
