@@ -50,5 +50,6 @@ if __name__=='__main__':
         # visualize
         vm = VisManager(config)
         vm.add_target(target_pos)
-        vm.reflect_solver_result(sol, [polygon], show_polygon_axis=True)
+        vm.reflect_solver_result(sol, [polygon], movable_polygon,
+                                 show_polygon_axis=True)
         vm.show_while()
