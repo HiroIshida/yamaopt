@@ -46,7 +46,11 @@ if __name__=='__main__':
     sol = kinsol.solve(q_init, polygon, target_pos,
                        movable_polygon=movable_polygon,
                        d_hover=d_hover, joint_limit_margin=joint_limit_margin)
-    assert sol.success
+    if sol.success:
+        print('optimization succeeded.')
+    else:
+        print('optimization failed.')
+        assert sol.success
 
     if visualize:
         # visualize
