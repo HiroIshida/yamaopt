@@ -14,7 +14,10 @@ install_requires = [
 setup(
     name='yamaopt',
     version='0.0.1',
-    description='',
+    description='Optimizing the position where the robot attaches the sensor.',
+    author='Hirokazu Ishida',
+    author_email='h-ishida@jsk.imi.i.u-tokyo.ac.jp',
+    url='https://github.com/HiroIshida/yamaopt',
     license='MIT',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
