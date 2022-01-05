@@ -4,8 +4,9 @@ import math
 import numpy as np
 from skrobot.coordinates.math import rotation_matrix
 from yamaopt.solver import KinematicSolver, SolverConfig
-from yamaopt.polygon_constraint import polygon_to_trans_constraint
 from yamaopt.visualizer import VisManager
+from yamaopt.utils import config_path_from_robot_name
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
@@ -23,13 +24,7 @@ if __name__=='__main__':
     joint_limit_margin = args.margin
     limit_base = args.limit_base
 
-    if robot_name == 'fetch':
-        config_path = "../config/fetch_conf.yaml"
-    elif robot_name == 'pr2':
-        config_path = "../config/pr2_conf.yaml"
-    else:
-        raise Exception()
-
+    config_path = config_path_from_robot_name(robot_name)
     config = SolverConfig.from_config_path(config_path, use_base=use_base)
     kinsol = KinematicSolver(config)
 
