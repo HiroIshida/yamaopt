@@ -61,26 +61,29 @@ def is_convex(np_polygon):
     sign_list = np.sign([crosspro_list[0].dot(e) for e in crosspro_list])
     return np.all(sign_list > 0) or np.all(sign_list < 0)
 
-def polygon_to_desired_rpy(np_polygon):
+def polygon_to_matrix(np_polygon):
     normalize = lambda vec: vec/np.linalg.norm(vec)
     strip_z = lambda vec: np.array([vec[0], vec[1], 0.0])
+    x_flip = False
     points = np_polygon
     center = np.mean(points, axis=0)
     x_axis = normalize(np.cross(points[2] - points[1], points[1] - points[0]))
 
-    tmp = np.array([x_axis[0], x_axis[1], 0.0])
-
     # becase normal vector should always directed against the robot body
     if center.dot(x_axis) < 0.0:
         x_axis *= -1
+        x_flip = True
 
     y_axis = normalize(strip_z(points[1] - points[0]))
     z_axis = np.cross(x_axis, y_axis)
     if z_axis[2] < 0.0:
         y_axis *= -1
         z_axis *= -1
-        
     M = np.vstack([x_axis, y_axis, z_axis]).T
+    return M, x_flip
+
+def polygon_to_desired_rpy(np_polygon):
+    M, _ = polygon_to_matrix(np_polygon)
     ypr = rpy_angle(M)[0]
     rpy = np.flip(ypr)
     return rpy
@@ -93,10 +96,9 @@ def polygon_to_trans_constraint(np_polygon, d_hover):
 
     points = np_polygon
 
-    n_vec = normalize(np.cross(points[2] - points[1], points[1] - points[0]))
-    if points[1].dot(n_vec) < 0.0:
-        # n_vec must not direct toward the robot
-        n_vec *= -1
+    M, x_flip = polygon_to_matrix(points)
+    n_vec = normalize(M.T[0])
+    if x_flip is True:
         points = np.flip(points, axis=0)
     points_auged = np.vstack([points, points[0]])
 
