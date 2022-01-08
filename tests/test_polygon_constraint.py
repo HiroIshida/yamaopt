@@ -53,7 +53,7 @@ def test_is_convex():
 def test_polygon_to_constraint():
     polygon = simple_simplex()
     d_hover = 0.0
-    Cineq, Ceq = polygon_to_trans_constraint(polygon, d_hover)
+    Cineq, Ceq = polygon_to_trans_constraint(polygon, d_hover=d_hover)
 
     assert Ceq(np.random.randn(3)).shape == (1,)
     assert Cineq(np.random.randn(3)).shape == (3,)
@@ -77,7 +77,7 @@ def test_polygon_to_constraint():
 
 
     polygon = simple_square()
-    Cineq, Ceq = polygon_to_trans_constraint(polygon, d_hover)
+    Cineq, Ceq = polygon_to_trans_constraint(polygon, d_hover=d_hover)
 
     assert Ceq(np.random.randn(3)).shape == (1,)
     assert Cineq(np.random.randn(3)).shape == (4,)

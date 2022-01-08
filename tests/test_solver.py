@@ -117,10 +117,10 @@ def test_solve():
             assert sol.success 
             assert len(sol.x) == 7 + 3 * use_base
 
-            ineq, eq = kinsol.configuration_constraint_from_polygon(polygon, d_hover)
+            ineq, eq = kinsol.configuration_constraint_from_polygon(polygon, d_hover=d_hover)
             P, jac = kinsol.forward_kinematics(sol.x)
             pos = P[:, :3]
-            ineq, eq = polygon_to_trans_constraint(polygon, d_hover)
+            ineq, eq = polygon_to_trans_constraint(polygon, d_hover=d_hover)
             assert ineq.is_satisfying(pos.flatten())
             assert eq.is_satisfying(pos.flatten())
 
@@ -159,6 +159,6 @@ def test_solve_multiple_with_realistic_data():
     sol = kinsol.solve_multiple(q_init, polygons, target_obj_pos, d_hover=d_hover)
     pos, rpy = sol.end_coords[:3], sol.end_coords[3:]
 
-    ineq, eq = polygon_to_trans_constraint(sol.target_polygon, d_hover)
+    ineq, eq = polygon_to_trans_constraint(sol.target_polygon, d_hover=d_hover)
     assert ineq.is_satisfying(pos)
     assert eq.is_satisfying(pos)
