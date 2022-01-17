@@ -5,6 +5,7 @@ from skrobot.coordinates.math import quaternion2matrix
 from skrobot.coordinates.math import rotation_matrix
 from yamaopt.polygon_constraint import is_convex, polygon_to_trans_constraint
 from yamaopt.polygon_constraint import polygon_to_desired_rpy
+from yamaopt.polygon_constraint import polygon_to_matrix
 
 def simple_simplex():
     return np.array([[1, 0., 0.], [0., 1., 0.], [0., 0., 1.]])
@@ -51,45 +52,62 @@ def test_is_convex():
     assert not is_convex(simple_nonconvex())
 
 def test_polygon_to_constraint():
+    # Constraints from simplex
     polygon = simple_simplex()
+    M, _ = polygon_to_matrix(polygon)
+    normal = M.T[0]
     d_hover = 0.0
-    Cineq, Ceq = polygon_to_trans_constraint(polygon, d_hover)
+    Cineq_wo_normal, Ceq_wo_normal = polygon_to_trans_constraint(
+        polygon, d_hover=d_hover)
+    Cineq_w_normal, Ceq_w_normal = polygon_to_trans_constraint(
+        polygon, normal=normal, d_hover=d_hover)
+    # Constraints with normal and without normal
+    Cineqs = [Cineq_wo_normal, Cineq_w_normal]
+    Ceqs = [Ceq_wo_normal, Ceq_w_normal]
+    for Cineq, Ceq in zip(Cineqs, Ceqs):
+        assert Ceq(np.random.randn(3)).shape == (1,)
+        assert Cineq(np.random.randn(3)).shape == (3,)
 
-    assert Ceq(np.random.randn(3)).shape == (1,)
-    assert Cineq(np.random.randn(3)).shape == (3,)
+        center = np.mean(polygon, axis=0)
+        assert Ceq.is_satisfying(center)
+        assert Cineq.is_satisfying(center)
 
-    center = np.mean(polygon, axis=0)
-    assert Ceq.is_satisfying(center)
-    assert Cineq.is_satisfying(center)
+        for pt in polygon:
+            assert Ceq.is_satisfying(pt)
+            assert Cineq.is_satisfying(pt)
+            assert np.all(Cineq(pt) > -1e-7)
 
-    for pt in polygon:
-        assert Ceq.is_satisfying(pt)
-        assert Cineq.is_satisfying(pt)
-        assert np.all(Cineq(pt) > -1e-7)
+        for pt in [np.zeros(3), np.ones(3), -np.ones(3)]:
+            assert not Ceq.is_satisfying(pt)
+            assert Cineq.is_satisfying(pt)
 
-    for pt in [np.zeros(3), np.ones(3), -np.ones(3)]:
-        assert not Ceq.is_satisfying(pt)
-        assert Cineq.is_satisfying(pt)
+        for pt in [np.array([0, 0, 2.]), np.array([0, 2., 0.])]:
+            assert not Ceq.is_satisfying(pt)
+            assert not Cineq.is_satisfying(pt)
 
-    for pt in [np.array([0, 0, 2.]), np.array([0, 2., 0.])]:
-        assert not Ceq.is_satisfying(pt)
-        assert not Cineq.is_satisfying(pt)
-
-
+    # Constraints from square
     polygon = simple_square()
-    Cineq, Ceq = polygon_to_trans_constraint(polygon, d_hover)
+    M, _ = polygon_to_matrix(polygon)
+    normal = M.T[0]
+    Cineq_wo_normal, Ceq_wo_normal = polygon_to_trans_constraint(
+        polygon, d_hover=d_hover)
+    Cineq_w_normal, Ceq_w_normal = polygon_to_trans_constraint(
+        polygon, normal=normal, d_hover=d_hover)
+    # Constraints with normal and without normal
+    Cineqs = [Cineq_wo_normal, Cineq_w_normal]
+    Ceqs = [Ceq_wo_normal, Ceq_w_normal]
+    for Cineq, Ceq in zip(Cineqs, Ceqs):
+        assert Ceq(np.random.randn(3)).shape == (1,)
+        assert Cineq(np.random.randn(3)).shape == (4,)
 
-    assert Ceq(np.random.randn(3)).shape == (1,)
-    assert Cineq(np.random.randn(3)).shape == (4,)
+        center = np.mean(polygon, axis=0)
+        assert Ceq.is_satisfying(center)
+        assert Cineq.is_satisfying(center)
 
-    center = np.mean(polygon, axis=0)
-    assert Ceq.is_satisfying(center)
-    assert Cineq.is_satisfying(center)
-
-    for pt in polygon:
-        assert Ceq.is_satisfying(pt)
-        assert Cineq.is_satisfying(pt)
-        assert np.all(Cineq(pt) > -1e-7)
+        for pt in polygon:
+            assert Ceq.is_satisfying(pt)
+            assert Cineq.is_satisfying(pt)
+            assert np.all(Cineq(pt) > -1e-7)
 
 def test_polygon_to_desired_rpy():
     polygon1 = simple_simplex()
@@ -100,8 +118,17 @@ def test_polygon_to_desired_rpy():
     polygon5 = polygon_obtained_from_realdata1()
     polygon6 = polygon_obtained_from_realdata2()
 
-    for polygon in [polygon1, polygon2, polygon3, polygon4, polygon5, polygon6]:
-        rpy = polygon_to_desired_rpy(polygon)
+    M, _ = polygon_to_matrix(polygon1)
+    normal1 = M.T[0]
+    M, _ = polygon_to_matrix(polygon2)
+    normal2 = M.T[0]
+
+    # For polygon1~2, calc rpy with normal
+    # For polygon3~6, calc rpy without normal
+    polygons = [polygon1, polygon2, polygon3, polygon4, polygon5, polygon6]
+    normals = [normal1, normal2, None, None, None, None]
+    for polygon, normal in zip(polygons, normals):
+        rpy = polygon_to_desired_rpy(polygon, normal=normal)
         q = rpy2quaternion(np.flip(rpy))
         matrix = quaternion2matrix(q)
         z_axis = matrix[:, 0]
