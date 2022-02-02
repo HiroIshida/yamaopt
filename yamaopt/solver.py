@@ -55,6 +55,7 @@ class SolverResult(object):
 
     # additional infos
     end_coords = attr.ib(default=None)
+    optframe_coords = attr.ib(default=None)
     target_polygon = attr.ib(default=None)
     _d_hover = attr.ib(default=None)
     _sol_scipy = attr.ib(default=None)
@@ -85,7 +86,7 @@ class KinematicSolver:
         optimization_frame_name = 'optframe'
         self.kin.add_new_link(optimization_frame_name, self.endeffector_id, 
                 config.optframe_xyz_from_ef, config.optframe_rpy_from_ef)
-        self.opt_link_id = self.kin.get_link_ids([optimization_frame_name])[0]
+        self.optframe_id = self.kin.get_link_ids([optimization_frame_name])[0]
 
     @property
     def dof(self): return len(self.control_joint_ids) + 3 * (self.config.use_base)
@@ -108,7 +109,7 @@ class KinematicSolver:
     def create_objective_function(self, target_obs_pos):
 
         def f(q):
-            P_whole, J_whole = self.forward_kinematics(q, self.opt_link_id)
+            P_whole, J_whole = self.forward_kinematics(q, self.optframe_id)
             P_pos = P_whole[:, :3]
             J_pos = J_whole[:3, :]
             val = np.sum((P_pos.flatten() - target_obs_pos) ** 2)
@@ -262,6 +263,7 @@ class KinematicSolver:
             self, sol_scipy, target_polygon=None, d_hover=None):
         if sol_scipy is None:
             return SolverResult(success=False)
-        poses, _ = self.forward_kinematics(sol_scipy.x)
-        pose = poses[0]
-        return SolverResult(sol_scipy.success, sol_scipy.x, sol_scipy.fun, pose, target_polygon, d_hover, sol_scipy)
+        endeffector_pose = self.forward_kinematics(sol_scipy.x)[0][0]
+        optframe_pose = self.forward_kinematics(sol_scipy.x, self.optframe_id)[0][0]
+        return SolverResult(sol_scipy.success, sol_scipy.x, sol_scipy.fun, 
+                endeffector_pose, optframe_pose, target_polygon, d_hover, sol_scipy)
