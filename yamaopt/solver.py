@@ -81,9 +81,9 @@ class KinematicSolver:
         self.joint_limits = joint_limits
         self.joint_types = joint_types
 
-        end_effector_id = self.kin.get_link_ids([config.endeffector_link_name])[0]
+        self.endeffector_id = self.kin.get_link_ids([config.endeffector_link_name])[0]
         optimization_frame_name = 'optframe'
-        self.kin.add_new_link(optimization_frame_name, end_effector_id, 
+        self.kin.add_new_link(optimization_frame_name, self.endeffector_id, 
                 config.optframe_xyz_from_ef, config.optframe_rpy_from_ef)
         self.opt_link_id = self.kin.get_link_ids([optimization_frame_name])[0]
 
@@ -91,13 +91,15 @@ class KinematicSolver:
     def dof(self): return len(self.control_joint_ids) + 3 * (self.config.use_base)
 
     # TODO lru cache
-    def forward_kinematics(self, q):
+    def forward_kinematics(self, q, link_id=None):
+        if link_id is None:
+            link_id = self.endeffector_id
         assert isinstance(q, np.ndarray) and q.ndim == 1
         with_jacobian = True 
         use_rotation = True
         use_base = self.config.use_base
         
-        link_ids = [self.opt_link_id]
+        link_ids = [link_id]
         joint_ids = self.control_joint_ids
         P, J = self.kin.solve_forward_kinematics(
                 [q], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
@@ -106,7 +108,7 @@ class KinematicSolver:
     def create_objective_function(self, target_obs_pos):
 
         def f(q):
-            P_whole, J_whole = self.forward_kinematics(q)
+            P_whole, J_whole = self.forward_kinematics(q, self.opt_link_id)
             P_pos = P_whole[:, :3]
             J_pos = J_whole[:3, :]
             val = np.sum((P_pos.flatten() - target_obs_pos) ** 2)
