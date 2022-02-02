@@ -25,6 +25,8 @@ class SolverConfig(object):
     optimization_frame = attr.ib()
     control_joint_names = attr.ib()
     endeffector_link_name = attr.ib()
+    optframe_xyz_from_ef = attr.ib() # ef means end effector
+    optframe_rpy_from_ef = attr.ib()
 
     @classmethod
     def from_config_path(cls, 
@@ -41,6 +43,8 @@ class SolverConfig(object):
                 optimization_frame = cfg['optimization_frame'],
                 control_joint_names = cfg['control_joint_names'],
                 endeffector_link_name = cfg['endeffector_link_name'],
+                optframe_xyz_from_ef = [0, 0, 0],
+                optframe_rpy_from_ef = [0, 0, 0]
                 )
 
 @attr.s # like a dataclass in python3
@@ -55,10 +59,12 @@ class SolverResult(object):
     _d_hover = attr.ib(default=None)
     _sol_scipy = attr.ib(default=None)
 
+
 class KinematicSolver:
     def __init__(self, config):
         urdf_path = os.path.expanduser(config.urdf_path)
         self.kin = RobotModel(urdf_path)
+
 
         robot_model = skrobot.model.RobotModel() # Here this model is used only for obtaining joint type (as an urdf parser)
         robot_model.load_urdf_file(urdf_path)
@@ -74,7 +80,12 @@ class KinematicSolver:
 
         self.joint_limits = joint_limits
         self.joint_types = joint_types
-        self.end_effector_id = self.kin.get_link_ids([config.endeffector_link_name])[0]
+
+        end_effector_id = self.kin.get_link_ids([config.endeffector_link_name])[0]
+        optimization_frame_name = 'optframe'
+        self.kin.add_new_link(optimization_frame_name, end_effector_id, 
+                config.optframe_xyz_from_ef, config.optframe_rpy_from_ef)
+        self.opt_link_id = self.kin.get_link_ids([optimization_frame_name])[0]
 
     @property
     def dof(self): return len(self.control_joint_ids) + 3 * (self.config.use_base)
@@ -86,7 +97,7 @@ class KinematicSolver:
         use_rotation = True
         use_base = self.config.use_base
         
-        link_ids = [self.end_effector_id]
+        link_ids = [self.opt_link_id]
         joint_ids = self.control_joint_ids
         P, J = self.kin.solve_forward_kinematics(
                 [q], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
