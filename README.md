@@ -33,6 +33,7 @@ python example_multi.py --visualize --use_base -robot pr2
 ```
 
 - The blue sphere is the point you want to observe. (`target_pos`).
+- The yellow sphere is the sensor's 'sweet spot'.
 - The red polygons define the constraints.
 - IK is calculated so that the end-effector is perpendicular to the polygon.
 - If we shift the position of the blue sphere, we can see that the IK solution also changes (see below).
