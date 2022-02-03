@@ -96,12 +96,6 @@ class VisManager:
         sensor_axis.translate([solver_result._d_hover, 0.0, 0.0])
         self.viewer.add(sensor_axis)
 
-        # add point indicating optframe
-        optframe_pos = solver_result.optframe_coords[:3]
-        optframe_vis = Sphere(0.05, pos=optframe_pos, color=[255, 255, 0])
-        self.viewer.add(optframe_vis)
-
-        # visualize polygons
         if normals is None:
             normals = [None] * len(np_polygon_list)
         for polygon, normal in zip(np_polygon_list, normals):

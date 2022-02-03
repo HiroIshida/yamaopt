@@ -28,7 +28,7 @@ if __name__=='__main__':
     else:
         raise Exception()
 
-    config = SolverConfig.from_config_path(config_path, use_base=use_base, optframe_xyz_from_ef=[0, 0.5, 0.])
+    config = SolverConfig.from_config_path(config_path, use_base=use_base)
     kinsol = KinematicSolver(config)
 
     polygon = np.array([[0.5, -0.6, 0.0], [0.5, 0.6, 0.0], [0.0, 0.0, 0.9]])
