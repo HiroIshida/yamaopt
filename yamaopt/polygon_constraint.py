@@ -2,6 +2,7 @@ import attr
 import numpy as np
 from skrobot.coordinates.math import matrix2quaternion
 from skrobot.coordinates.math import rpy_angle
+from yamaopt.utils import array_cache
 
 @attr.s # like a dataclass in python3
 class LinearEqConst(object):
@@ -89,6 +90,7 @@ def polygon_to_matrix(np_polygon, normal=None):
     M = np.vstack([x_axis, y_axis, z_axis]).T
     return M, x_flip
 
+@array_cache
 def polygon_to_desired_rpy(np_polygon, normal=None):
     M, _ = polygon_to_matrix(np_polygon, normal)
     ypr = rpy_angle(M)[0]

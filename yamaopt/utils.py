@@ -1,3 +1,24 @@
+import functools
+import numpy as np
+import operator
+import hashlib
+
+def array_cache(f):
+    # Because np.array is not hashbale, custom cache wrapper must be defined...
+    algo = lambda x: hashlib.md5(x).digest() # TODO candidate: default hash() or xxhash.xxh64()
+    cache = {}
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        # NOTE __str__() is too big for nparray
+        tobyte = lambda val: val.tostring() if type(val) is np.ndarray else val.__str__().encode()
+        strenc = functools.reduce(operator.add, map(tobyte, args))
+        if kwargs:
+            strenc += functools.reduce(operator.add, map(tobyte, list(kwargs.values())))
+        hashval = algo(strenc)
+        if not hashval in cache:
+            cache[hashval] = f(*args, **kwargs)
+        return cache[hashval]
+    return wrapped
 
 def scipinize(fun):
     """Scipinize a function returning both f and jac
