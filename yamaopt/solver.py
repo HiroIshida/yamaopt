@@ -226,9 +226,10 @@ class KinematicSolver:
                 joint_limits_tight[i][1] -= margin # tighten upper bound
 
         # Solve optimization
+        sqp_option = {'maxiter': 300}
         sol = scipy.optimize.minimize(
             f, q_init, method='SLSQP', jac=jac,
-            constraints=cons, bounds=joint_limits_tight)
+            constraints=cons, bounds=joint_limits_tight, options=sqp_option)
 
         """
         if output_gif:
