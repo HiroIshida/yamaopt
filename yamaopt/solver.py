@@ -25,12 +25,16 @@ class SolverConfig(object):
     optimization_frame = attr.ib()
     control_joint_names = attr.ib()
     endeffector_link_name = attr.ib()
+    optframe_xyz_from_ef = attr.ib() # ef means end effector
+    optframe_rpy_from_ef = attr.ib()
 
     @classmethod
     def from_config_path(cls, 
             config_path, 
             use_base=False, 
-            joint_limit_margin=None # [degree] or None
+            joint_limit_margin=None, # [degree] or None
+            optframe_xyz_from_ef=[0, 0, 0],
+            optframe_rpy_from_ef=[0, 0, 0],
             ):
         with open(config_path, 'r') as f:
             cfg = yaml.safe_load(f)
@@ -41,6 +45,8 @@ class SolverConfig(object):
                 optimization_frame = cfg['optimization_frame'],
                 control_joint_names = cfg['control_joint_names'],
                 endeffector_link_name = cfg['endeffector_link_name'],
+                optframe_xyz_from_ef = optframe_xyz_from_ef, # Maybe write in yaml file?
+                optframe_rpy_from_ef = optframe_rpy_from_ef,
                 )
 
 @attr.s # like a dataclass in python3
@@ -51,14 +57,17 @@ class SolverResult(object):
 
     # additional infos
     end_coords = attr.ib(default=None)
+    optframe_coords = attr.ib(default=None)
     target_polygon = attr.ib(default=None)
     _d_hover = attr.ib(default=None)
     _sol_scipy = attr.ib(default=None)
+
 
 class KinematicSolver:
     def __init__(self, config):
         urdf_path = os.path.expanduser(config.urdf_path)
         self.kin = RobotModel(urdf_path)
+
 
         robot_model = skrobot.model.RobotModel() # Here this model is used only for obtaining joint type (as an urdf parser)
         robot_model.load_urdf_file(urdf_path)
@@ -74,19 +83,26 @@ class KinematicSolver:
 
         self.joint_limits = joint_limits
         self.joint_types = joint_types
-        self.end_effector_id = self.kin.get_link_ids([config.endeffector_link_name])[0]
+
+        self.endeffector_id = self.kin.get_link_ids([config.endeffector_link_name])[0]
+        optimization_frame_name = 'optframe'
+        self.kin.add_new_link(optimization_frame_name, self.endeffector_id, 
+                config.optframe_xyz_from_ef, config.optframe_rpy_from_ef)
+        self.optframe_id = self.kin.get_link_ids([optimization_frame_name])[0]
 
     @property
     def dof(self): return len(self.control_joint_ids) + 3 * (self.config.use_base)
 
     # TODO lru cache
-    def forward_kinematics(self, q):
+    def forward_kinematics(self, q, link_id=None):
+        if link_id is None:
+            link_id = self.endeffector_id
         assert isinstance(q, np.ndarray) and q.ndim == 1
         with_jacobian = True 
         use_rotation = True
         use_base = self.config.use_base
         
-        link_ids = [self.end_effector_id]
+        link_ids = [link_id]
         joint_ids = self.control_joint_ids
         P, J = self.kin.solve_forward_kinematics(
                 [q], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
@@ -95,7 +111,7 @@ class KinematicSolver:
     def create_objective_function(self, target_obs_pos):
 
         def f(q):
-            P_whole, J_whole = self.forward_kinematics(q)
+            P_whole, J_whole = self.forward_kinematics(q, self.optframe_id)
             P_pos = P_whole[:, :3]
             J_pos = J_whole[:3, :]
             val = np.sum((P_pos.flatten() - target_obs_pos) ** 2)
@@ -249,6 +265,7 @@ class KinematicSolver:
             self, sol_scipy, target_polygon=None, d_hover=None):
         if sol_scipy is None:
             return SolverResult(success=False)
-        poses, _ = self.forward_kinematics(sol_scipy.x)
-        pose = poses[0]
-        return SolverResult(sol_scipy.success, sol_scipy.x, sol_scipy.fun, pose, target_polygon, d_hover, sol_scipy)
+        endeffector_pose = self.forward_kinematics(sol_scipy.x)[0][0]
+        optframe_pose = self.forward_kinematics(sol_scipy.x, self.optframe_id)[0][0]
+        return SolverResult(sol_scipy.success, sol_scipy.x, sol_scipy.fun, 
+                endeffector_pose, optframe_pose, target_polygon, d_hover, sol_scipy)
