@@ -141,15 +141,16 @@ class KinematicSolver:
             J_pos, J_rot = J_whole[:3, :], J_whole[3:, :]
             val_pos = ((lin_eq.A.dot(P_pos.T)).T - lin_eq.b).flatten()
             jac_pos = lin_eq.A.dot(J_pos)
+
             # remove roll constraint
-            wrist_roll_index = 0
             rpy_desired = polygon_to_desired_rpy(np_polygon)
-            py_desired = np.delete(rpy_desired, wrist_roll_index, axis=0)
-            P_rot = np.delete(P_rot, wrist_roll_index, axis=1)
-            J_rot = np.delete(J_rot, wrist_roll_index, axis=0)
+            py_desired = rpy_desired[1:] # ignore roll constraint
+            P_rot_roll_ignored = P_rot[:, 1:]
+            J_rot_roll_ignored = J_rot[1:, :]
+
             # rot value and rot jacobian
-            val_rot = P_rot.flatten() - py_desired
-            jac_rot = J_rot
+            val_rot = P_rot_roll_ignored.flatten() - py_desired
+            jac_rot = J_rot_roll_ignored
             return np.hstack([val_pos, val_rot]), np.vstack([jac_pos, jac_rot])
 
         return hand_ineq_constraint, hand_eq_constraint
