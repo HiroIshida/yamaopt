@@ -9,15 +9,6 @@ For Python2.x, the following apt install is required to install scikit-robot:
 ```
 sudo apt-get install -y libspatialindex-dev freeglut3-dev libsuitesparse-dev libblas-dev liblapack-dev
 ```
-
-If you don't have `GLIBCXX_3.4.26`, install following packages: (for tinyik)
-```
-sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-sudo apt update
-sudo apt install gcc-9
-sudo apt install libstdc++6
-```
-
 Then, install yamaopt
 
 ```
