@@ -8,3 +8,5 @@ control_joint_names: [
     elbow_flex_joint,
     forearm_roll_joint]
 endeffector_link_name: gripper_link
+optframe_xyz_from_ef: [0.0, 0.0, 0.0]
+optframe_rpy_from_ef: [0.0, 0.0, 0.0]
