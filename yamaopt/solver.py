@@ -45,8 +45,8 @@ class SolverConfig(object):
                 optimization_frame = cfg['optimization_frame'],
                 control_joint_names = cfg['control_joint_names'],
                 endeffector_link_name = cfg['endeffector_link_name'],
-                optframe_xyz_from_ef = optframe_xyz_from_ef, # Maybe write in yaml file?
-                optframe_rpy_from_ef = optframe_rpy_from_ef,
+                optframe_xyz_from_ef = cfg['optframe_xyz_from_ef'],
+                optframe_rpy_from_ef = cfg['optframe_rpy_from_ef'],
                 )
 
 @attr.s # like a dataclass in python3
