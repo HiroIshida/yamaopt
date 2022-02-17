@@ -81,7 +81,11 @@ def polygon_to_matrix(np_polygon, normal=None):
             x_flip = True
         x_axis = normalize(normal)
     # Calculate y and z axis of polygon
-    y_axis = normalize(strip_z(points[1] - points[0]))
+    p = points[1] - points[0]
+    if p[0] == 0.0 and p[1] == 0.0:
+        y_axis = np.array([0, 0, 1.0])
+    else:
+        y_axis = normalize(strip_z(p))
     z_axis = np.cross(x_axis, y_axis)
     if z_axis[2] < 0.0:
         y_axis *= -1
