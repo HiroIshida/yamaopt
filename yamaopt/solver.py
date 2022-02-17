@@ -143,7 +143,7 @@ class KinematicSolver:
             jac_pos = lin_eq.A.dot(J_pos)
 
             # remove roll constraint
-            rpy_desired = polygon_to_desired_rpy(np_polygon)
+            rpy_desired = polygon_to_desired_rpy(np_polygon, normal)
             py_desired = rpy_desired[1:] # ignore roll constraint
             P_rot_roll_ignored = P_rot[:, 1:]
             J_rot_roll_ignored = J_rot[1:, :]
