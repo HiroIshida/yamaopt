@@ -32,12 +32,16 @@ class SolverConfig(object):
     def from_config_path(cls, 
             config_path, 
             use_base=False, 
-            joint_limit_margin=None, # [degree] or None
-            optframe_xyz_from_ef=[0, 0, 0],
-            optframe_rpy_from_ef=[0, 0, 0],
+            optframe_xyz_from_ef=None,
+            optframe_rpy_from_ef=None,
             ):
         with open(config_path, 'r') as f:
             cfg = yaml.safe_load(f)
+
+        if optframe_xyz_from_ef is None:
+            optframe_xyz_from_ef = cfg['optframe_xyz_from_ef']
+        if optframe_rpy_from_ef is None:
+            optframe_rpy_from_ef = cfg['optframe_rpy_from_ef']
 
         return cls(
                 use_base,
@@ -45,8 +49,8 @@ class SolverConfig(object):
                 optimization_frame = cfg['optimization_frame'],
                 control_joint_names = cfg['control_joint_names'],
                 endeffector_link_name = cfg['endeffector_link_name'],
-                optframe_xyz_from_ef = cfg['optframe_xyz_from_ef'],
-                optframe_rpy_from_ef = cfg['optframe_rpy_from_ef'],
+                optframe_xyz_from_ef = optframe_xyz_from_ef,
+                optframe_rpy_from_ef = optframe_rpy_from_ef,
                 )
 
 @attr.s # like a dataclass in python3
