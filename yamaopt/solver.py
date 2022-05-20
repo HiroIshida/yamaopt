@@ -32,7 +32,6 @@ class SolverConfig(object):
     def from_config_path(cls, 
             config_path, 
             use_base=False, 
-            joint_limit_margin=None, # [degree] or None
             optframe_xyz_from_ef=[0, 0, 0],
             optframe_rpy_from_ef=[0, 0, 0],
             ):
