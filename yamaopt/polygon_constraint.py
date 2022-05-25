@@ -4,29 +4,34 @@ from skrobot.coordinates.math import matrix2quaternion
 from skrobot.coordinates.math import rpy_angle
 from yamaopt.utils import array_cache
 
-@attr.s # like a dataclass in python3
+
+@attr.s  # like a dataclass in python3
 class LinearEqConst(object):
     # A * x - b = 0
     A = attr.ib()
     b = attr.ib()
-    def __call__(self, x): return self.A.dot(x) - self.b 
+    def __call__(self, x): return self.A.dot(x) - self.b
     def is_satisfying(self, x): return np.all(np.abs(self.__call__(x)) < 1e-3)
+
 
 @attr.s
 class LinearIneqConst(object):
     # A * x - b >= 0
     A = attr.ib()
     b = attr.ib()
-    def __call__(self, x): return self.A.dot(x) - self.b 
+    def __call__(self, x): return self.A.dot(x) - self.b
     def is_satisfying(self, x): return np.all(self.__call__(x) > -1e-3)
+
 
 class ConcavePolygonException(Exception):
     """Raised when the polygon is concave (not convex)"""
     pass
 
+
 class ZValueNotZeroException(Exception):
     """Raised when the polygon's z value is not 0"""
     pass
+
 
 def check_convexity_and_maybe_ammend(np_polygon):
     # TODO(HiroIshida) PR to jsk_pcl_ros
@@ -36,19 +41,20 @@ def check_convexity_and_maybe_ammend(np_polygon):
 
     dotpro_list = []
     for i in range(len(points)):
-        vec1 = points_auged[i+1] - points_auged[i]
-        vec2 = points_auged[i+2] - points_auged[i+1]
+        vec1 = points_auged[i + 1] - points_auged[i]
+        vec2 = points_auged[i + 2] - points_auged[i + 1]
         dotpro_list.append(vec1.dot(vec2))
     dotpro_list = np.array(dotpro_list)
 
     positive_idxes = np.where(dotpro_list >= 0)[0]
     negative_idxes = np.where(dotpro_list < 0)[0]
-    if len(positive_idxes)==0 or len(negative_idxes) == 0:
+    if len(positive_idxes) == 0 or len(negative_idxes) == 0:
         return np_polygon
 
     if min(len(positive_idxes), len(negative_idxes)) > 1:
         raise RuntimeError("not convex. and cannot fix by the adhoc method")
     return np_polygon
+
 
 def is_convex(np_polygon):
     points = np_polygon
@@ -56,15 +62,16 @@ def is_convex(np_polygon):
 
     crosspro_list = []
     for i in range(len(points)):
-        vec1 = points_auged[i+1] - points_auged[i]
-        vec2 = points_auged[i+2] - points_auged[i+1]
+        vec1 = points_auged[i + 1] - points_auged[i]
+        vec2 = points_auged[i + 2] - points_auged[i + 1]
         crosspro_list.append(np.cross(vec1, vec2))
     sign_list = np.sign([crosspro_list[0].dot(e) for e in crosspro_list])
     return np.all(sign_list > 0) or np.all(sign_list < 0)
 
+
 def polygon_to_matrix(np_polygon, normal=None):
-    normalize = lambda vec: vec/np.linalg.norm(vec)
-    strip_z = lambda vec: np.array([vec[0], vec[1], 0.0])
+    def normalize(vec): return vec / np.linalg.norm(vec)
+    def strip_z(vec): return np.array([vec[0], vec[1], 0.0])
     x_flip = False
     # Calculate x axis (normal vector) of polygon
     points = np_polygon
@@ -94,6 +101,7 @@ def polygon_to_matrix(np_polygon, normal=None):
     M = np.vstack([x_axis, y_axis, z_axis]).T
     return M, x_flip
 
+
 @array_cache
 def polygon_to_desired_rpy(np_polygon, normal=None):
     M, _ = polygon_to_matrix(np_polygon, normal)
@@ -101,11 +109,12 @@ def polygon_to_desired_rpy(np_polygon, normal=None):
     rpy = np.flip(ypr)
     return rpy
 
+
 def polygon_to_trans_constraint(np_polygon, normal=None, d_hover=0.0):
     if not is_convex(np_polygon):
         raise ConcavePolygonException
 
-    normalize = lambda vec: vec/np.linalg.norm(vec)
+    def normalize(vec): return vec / np.linalg.norm(vec)
 
     points = np_polygon
     M, x_flip = polygon_to_matrix(points, normal)
@@ -125,9 +134,9 @@ def polygon_to_trans_constraint(np_polygon, normal=None, d_hover=0.0):
     b_ineq_local_list = []
     for i in range(len(points_auged) - 1):
         p_here = points_auged[i]
-        p_next = points_auged[i+1]
+        p_next = points_auged[i + 1]
         vec = p_next - p_here
-        n_vec_local = -normalize(np.cross(n_vec, vec)) # toward inside of the polygon
+        n_vec_local = -normalize(np.cross(n_vec, vec))  # toward inside of the polygon
 
         # let q be a query point. Then ineq const is (q - p_here)^T \dot n_vec_local > 0
         A_local = np.array(n_vec_local)
@@ -139,7 +148,8 @@ def polygon_to_trans_constraint(np_polygon, normal=None, d_hover=0.0):
     linineq = LinearIneqConst(A_ineq, b_ineq)
     return linineq, lineq
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     pass
     """
     import pickle

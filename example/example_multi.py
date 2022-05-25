@@ -7,7 +7,7 @@ from yamaopt.solver import KinematicSolver, SolverConfig
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
 from yamaopt.visualizer import VisManager
 
-if __name__=='__main__':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-robot', type=str, default='pr2', help='robot name')
     parser.add_argument('-hover', type=float, default='0.05', help='hover distance')
@@ -33,7 +33,8 @@ if __name__=='__main__':
     config = SolverConfig.from_config_path(config_path, use_base=use_base, optframe_xyz_from_ef=[0, 0.5, 0.0])
     kinsol = KinematicSolver(config)
 
-    polygon1 = np.array([[1.0, -0.5, -0.5], [1.0, 0.5, -0.5], [1.0, 0.5, 0.5], [1.0, -0.5, 0.5]]) + np.array([0, 0, 1.0])
+    polygon1 = np.array([[1.0, -0.5, -0.5], [1.0, 0.5, -0.5], [1.0, 0.5, 0.5],
+                        [1.0, -0.5, 0.5]]) + np.array([0, 0, 1.0])
     polygon2 = polygon1.dot(rotation_matrix(math.pi / 2.0, [0, 0, 1.0]).T)
     polygon3 = polygon1.dot(rotation_matrix(-math.pi / 2.0, [0, 0, 1.0]).T)
     polygon4 = np.array([[1.0, 0.2, 0.2], [1.0, 0.5, -0.5], [1.0, 0.5, 0.5], [1.0, -0.5, 0.5]]) + np.array([0, 0, 1.0])

@@ -12,4 +12,3 @@ pr2_urdf_path = os.path.expanduser('~/.skrobot/fetch_description')
 if not os.path.exists(pr2_urdf_path):
     print("downloading fetch model... This takes place only once.")
     fetch_urdfpath()
-

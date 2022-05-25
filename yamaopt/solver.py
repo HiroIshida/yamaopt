@@ -18,23 +18,24 @@ from yamaopt.polygon_constraint import ConcavePolygonException
 from yamaopt.polygon_constraint import ZValueNotZeroException
 from yamaopt.utils import scipinize
 
-@attr.s # like a dataclass in python3
+
+@attr.s  # like a dataclass in python3
 class SolverConfig(object):
     use_base = attr.ib()
     urdf_path = attr.ib()
     optimization_frame = attr.ib()
     control_joint_names = attr.ib()
     endeffector_link_name = attr.ib()
-    optframe_xyz_from_ef = attr.ib() # ef means end effector
+    optframe_xyz_from_ef = attr.ib()  # ef means end effector
     optframe_rpy_from_ef = attr.ib()
 
     @classmethod
-    def from_config_path(cls, 
-            config_path, 
-            use_base=False, 
-            optframe_xyz_from_ef=None,
-            optframe_rpy_from_ef=None,
-            ):
+    def from_config_path(cls,
+                         config_path,
+                         use_base=False,
+                         optframe_xyz_from_ef=None,
+                         optframe_rpy_from_ef=None,
+                         ):
         with open(config_path, 'r') as f:
             cfg = yaml.safe_load(f)
 
@@ -44,16 +45,17 @@ class SolverConfig(object):
             optframe_rpy_from_ef = cfg['optframe_rpy_from_ef']
 
         return cls(
-                use_base,
-                urdf_path = cfg['urdf_path'],
-                optimization_frame = cfg['optimization_frame'],
-                control_joint_names = cfg['control_joint_names'],
-                endeffector_link_name = cfg['endeffector_link_name'],
-                optframe_xyz_from_ef = optframe_xyz_from_ef,
-                optframe_rpy_from_ef = optframe_rpy_from_ef,
-                )
+            use_base,
+            urdf_path=cfg['urdf_path'],
+            optimization_frame=cfg['optimization_frame'],
+            control_joint_names=cfg['control_joint_names'],
+            endeffector_link_name=cfg['endeffector_link_name'],
+            optframe_xyz_from_ef=optframe_xyz_from_ef,
+            optframe_rpy_from_ef=optframe_rpy_from_ef,
+        )
 
-@attr.s # like a dataclass in python3
+
+@attr.s  # like a dataclass in python3
 class SolverResult(object):
     success = attr.ib(default=None)
     x = attr.ib(default=None)
@@ -72,8 +74,7 @@ class KinematicSolver:
         urdf_path = os.path.expanduser(config.urdf_path)
         self.kin = RobotModel(urdf_path)
 
-
-        robot_model = skrobot.model.RobotModel() # Here this model is used only for obtaining joint type (as an urdf parser)
+        robot_model = skrobot.model.RobotModel()  # Here this model is used only for obtaining joint type (as an urdf parser)
         robot_model.load_urdf_file(urdf_path)
 
         self.config = config
@@ -82,7 +83,7 @@ class KinematicSolver:
         joint_types = [type(robot_model.__dict__[jn]) for jn in config.control_joint_names]
 
         if self.config.use_base:
-            joint_limits.extend([[None, None]] * 3) # for x, y, theta
+            joint_limits.extend([[None, None]] * 3)  # for x, y, theta
             joint_types.extend([LinearJoint, LinearJoint, RotationalJoint])
 
         self.joint_limits = joint_limits
@@ -90,8 +91,8 @@ class KinematicSolver:
 
         self.endeffector_id = self.kin.get_link_ids([config.endeffector_link_name])[0]
         optimization_frame_name = 'optframe'
-        self.kin.add_new_link(optimization_frame_name, self.endeffector_id, 
-                config.optframe_xyz_from_ef, config.optframe_rpy_from_ef)
+        self.kin.add_new_link(optimization_frame_name, self.endeffector_id,
+                              config.optframe_xyz_from_ef, config.optframe_rpy_from_ef)
         self.optframe_id = self.kin.get_link_ids([optimization_frame_name])[0]
 
     @property
@@ -102,14 +103,14 @@ class KinematicSolver:
         if link_id is None:
             link_id = self.endeffector_id
         assert isinstance(q, np.ndarray) and q.ndim == 1
-        with_jacobian = True 
+        with_jacobian = True
         use_rotation = True
         use_base = self.config.use_base
-        
+
         link_ids = [link_id]
         joint_ids = self.control_joint_ids
         P, J = self.kin.solve_forward_kinematics(
-                [q], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
+            [q], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
         return P, J
 
     def create_objective_function(self, target_obs_pos):
@@ -148,7 +149,7 @@ class KinematicSolver:
 
             # remove roll constraint
             rpy_desired = polygon_to_desired_rpy(np_polygon, normal)
-            py_desired = rpy_desired[1:] # ignore roll constraint
+            py_desired = rpy_desired[1:]  # ignore roll constraint
             P_rot_roll_ignored = P_rot[:, 1:]
             J_rot_roll_ignored = J_rot[1:, :]
 
@@ -227,8 +228,8 @@ class KinematicSolver:
                 continue
             is_infinite_rotational_joint = (None in joint_limits_tight[i])
             if not is_infinite_rotational_joint:
-                joint_limits_tight[i][0] += margin # tighten lower bound
-                joint_limits_tight[i][1] -= margin # tighten upper bound
+                joint_limits_tight[i][0] += margin  # tighten lower bound
+                joint_limits_tight[i][1] -= margin  # tighten upper bound
 
         # Solve optimization
         sqp_option = {'maxiter': 300}
@@ -276,5 +277,5 @@ class KinematicSolver:
             return SolverResult(success=False)
         endeffector_pose = self.forward_kinematics(sol_scipy.x)[0][0]
         optframe_pose = self.forward_kinematics(sol_scipy.x, self.optframe_id)[0][0]
-        return SolverResult(sol_scipy.success, sol_scipy.x, sol_scipy.fun, 
-                endeffector_pose, optframe_pose, target_polygon, d_hover, sol_scipy)
+        return SolverResult(sol_scipy.success, sol_scipy.x, sol_scipy.fun,
+                            endeffector_pose, optframe_pose, target_polygon, d_hover, sol_scipy)

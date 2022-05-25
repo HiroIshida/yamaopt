@@ -1,19 +1,20 @@
 import os
 import pybullet as pb
-import pybullet_data 
+import pybullet_data
 from moviepy.editor import ImageSequenceClip
+
 
 class PybulletVisualizer:
     def __init__(self, urdf_path, control_joint_names, use_gui=False):
         client = pb.connect(pb.GUI if use_gui else pb.DIRECT)
-        pb.configureDebugVisualizer(pb.COV_ENABLE_GUI,0)
+        pb.configureDebugVisualizer(pb.COV_ENABLE_GUI, 0)
         robot_id = pb.loadURDF(urdf_path)
         pbdata_path = pybullet_data.getDataPath()
         #pb.loadURDF(os.path.join(pbdata_path, "samurai.urdf"))
 
-        link_table = {pb.getBodyInfo(robot_id, physicsClientId=client)[0].decode('UTF-8'):-1}
+        link_table = {pb.getBodyInfo(robot_id, physicsClientId=client)[0].decode('UTF-8'): -1}
         joint_table = {}
-        heck = lambda path: "_".join(path.split("/"))
+        def heck(path): return "_".join(path.split("/"))
         for _id in range(pb.getNumJoints(robot_id, physicsClientId=client)):
             joint_info = pb.getJointInfo(robot_id, _id, physicsClientId=client)
             joint_id = joint_info[0]
@@ -32,8 +33,8 @@ class PybulletVisualizer:
 
         for angle, joint_id in zip(q, self.control_joint_ids):
             pb.resetJointState(self.robot_id, joint_id, angle,
-                    targetVelocity = 0.0,
-                    physicsClientId=self.client)
+                               targetVelocity=0.0,
+                               physicsClientId=self.client)
 
     def visualize_sequence(self, q_seq):
         img_seq = []
@@ -59,7 +60,7 @@ class PybulletVisualizer:
             farVal=5.1)
 
         width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
-            width=resolution, 
+            width=resolution,
             height=resolution,
             viewMatrix=viewMatrix,
             projectionMatrix=projectionMatrix)

@@ -3,14 +3,16 @@ import numpy as np
 import operator
 import hashlib
 
+
 def array_cache(f):
     # Because np.array is not hashbale, custom cache wrapper must be defined...
-    algo = lambda x: hashlib.md5(x).digest() # TODO candidate: default hash() or xxhash.xxh64()
+    def algo(x): return hashlib.md5(x).digest()  # TODO candidate: default hash() or xxhash.xxh64()
     cache = {}
+
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
         # NOTE __str__() is too big for nparray
-        tobyte = lambda val: val.tostring() if type(val) is np.ndarray else val.__str__().encode()
+        def tobyte(val): return val.tostring() if type(val) is np.ndarray else val.__str__().encode()
         strenc = functools.reduce(operator.add, map(tobyte, args))
         if kwargs:
             strenc += functools.reduce(operator.add, map(tobyte, list(kwargs.values())))
@@ -19,6 +21,7 @@ def array_cache(f):
             cache[hashval] = f(*args, **kwargs)
         return cache[hashval]
     return wrapped
+
 
 def scipinize(fun):
     """Scipinize a function returning both f and jac
@@ -51,6 +54,7 @@ def scipinize(fun):
     def fun_scipinized_jac(x):
         return closure_member['jac_cache']
     return fun_scipinized, fun_scipinized_jac
+
 
 def matrix2quaternion(m):
     """Returns quaternion of given rotation matrix.
@@ -99,6 +103,7 @@ def matrix2quaternion(m):
         qy = (m[1, 2] + m[2, 1]) / S
         qz = 0.25 * S
     return np.array([qw, qx, qy, qz])
+
 
 def quaternion2rpy(q):
     """Returns Roll-pitch-yaw angles of a given quaternion.

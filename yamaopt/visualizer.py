@@ -11,6 +11,7 @@ from skrobot.planner.utils import set_robot_config
 from yamaopt.polygon_constraint import polygon_to_desired_rpy
 from yamaopt.polygon_constraint import ConcavePolygonException
 
+
 class VisManager:
     def __init__(self, config):
         urdf_path = os.path.expanduser(config.urdf_path)
@@ -36,12 +37,11 @@ class VisManager:
 
         faces = []
         vertices = [center]
-        for i in range(len(polygon_auged)-1):
+        for i in range(len(polygon_auged) - 1):
             v0 = polygon_auged[i]
-            v1 = polygon_auged[i+1]
+            v1 = polygon_auged[i + 1]
             vertices.extend([v0, v1])
-            faces.append([0, len(vertices)-2, len(vertices)-1])
-
+            faces.append([0, len(vertices) - 2, len(vertices) - 1])
 
         vertices = np.array(vertices)
         return vertices, faces
@@ -68,8 +68,8 @@ class VisManager:
             np_polygon = [np_polygon]
         for p in np_polygon:
             V, F = self._convert_polygon_to_mesh(p)
-            mesh = visual_mesh=trimesh.Trimesh(
-                    vertices=V, faces=F, face_colors=rgba)
+            mesh = visual_mesh = trimesh.Trimesh(
+                vertices=V, faces=F, face_colors=rgba)
             polygon_link = MeshLink(mesh)
             self.viewer.add(polygon_link)
 

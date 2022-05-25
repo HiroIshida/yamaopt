@@ -5,7 +5,7 @@ from yamaopt.solver import KinematicSolver, SolverConfig
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
 from yamaopt.visualizer import VisManager
 
-if __name__=='__main__':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-robot', type=str, default='pr2', help='robot name')
     parser.add_argument('-hover', type=float, default='0.05', help='hover distance')
