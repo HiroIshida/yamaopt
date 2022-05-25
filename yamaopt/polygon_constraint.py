@@ -123,7 +123,8 @@ def polygon_to_desired_rpy(np_polygon, normal=None):
     return rpy
 
 
-def polygon_to_trans_constraint(np_polygon, normal=None, d_hover=0.0):
+def polygon_to_trans_constraint(
+        np_polygon, normal=None, d_hover=0.0, polygon_shrink=0.0):
     if not is_convex(np_polygon):
         raise ConcavePolygonException
 
@@ -154,7 +155,7 @@ def polygon_to_trans_constraint(np_polygon, normal=None, d_hover=0.0):
 
         # let q be a query point. Then ineq const is (q - p_here)^T \dot n_vec_local > 0
         A_local = np.array(n_vec_local)
-        b_local = np.dot(p_here, n_vec_local)
+        b_local = np.dot(p_here, n_vec_local) + polygon_shrink
         A_ineq_local_list.append(A_local)
         b_ineq_local_list.append(b_local)
     A_ineq = np.vstack(A_ineq_local_list)
