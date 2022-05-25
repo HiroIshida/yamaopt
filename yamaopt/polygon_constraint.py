@@ -2,6 +2,7 @@ import attr
 import numpy as np
 from skrobot.coordinates.math import matrix2quaternion
 from skrobot.coordinates.math import rpy_angle
+
 from yamaopt.utils import array_cache
 
 

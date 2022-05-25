@@ -1,20 +1,21 @@
-import os
-import math
 import copy
+import math
+import os
+
 import attr
-from tinyfk import RobotModel
-import yaml
 import numpy as np
 import scipy.optimize
 import skrobot
-from skrobot.model.joint import RotationalJoint
 from skrobot.model.joint import FixedJoint
 from skrobot.model.joint import LinearJoint
 from skrobot.model.joint import OmniWheelJoint
+from skrobot.model.joint import RotationalJoint
+from tinyfk import RobotModel
+import yaml
 
-from yamaopt.polygon_constraint import polygon_to_trans_constraint
-from yamaopt.polygon_constraint import polygon_to_desired_rpy
 from yamaopt.polygon_constraint import ConcavePolygonException
+from yamaopt.polygon_constraint import polygon_to_desired_rpy
+from yamaopt.polygon_constraint import polygon_to_trans_constraint
 from yamaopt.polygon_constraint import ZValueNotZeroException
 from yamaopt.utils import scipinize
 

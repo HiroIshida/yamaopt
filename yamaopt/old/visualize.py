@@ -1,7 +1,8 @@
 import os
+
+from moviepy.editor import ImageSequenceClip
 import pybullet as pb
 import pybullet_data
-from moviepy.editor import ImageSequenceClip
 
 
 class PybulletVisualizer:

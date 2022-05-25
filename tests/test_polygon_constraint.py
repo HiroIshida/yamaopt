@@ -1,11 +1,14 @@
-import numpy as np
 import math
-from skrobot.coordinates.math import rpy2quaternion
+
+import numpy as np
 from skrobot.coordinates.math import quaternion2matrix
 from skrobot.coordinates.math import rotation_matrix
-from yamaopt.polygon_constraint import is_convex, polygon_to_trans_constraint
+from skrobot.coordinates.math import rpy2quaternion
+
+from yamaopt.polygon_constraint import is_convex
 from yamaopt.polygon_constraint import polygon_to_desired_rpy
 from yamaopt.polygon_constraint import polygon_to_matrix
+from yamaopt.polygon_constraint import polygon_to_trans_constraint
 
 
 def simple_simplex():

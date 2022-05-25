@@ -1,15 +1,19 @@
 import copy
 import os
-import numpy as np
 import time
-import trimesh
+
+import numpy as np
 import skrobot
 from skrobot.coordinates import Coordinates
 from skrobot.coordinates.math import rpy_matrix
-from skrobot.model.primitives import MeshLink, Sphere, Axis
+from skrobot.model.primitives import Axis
+from skrobot.model.primitives import MeshLink
+from skrobot.model.primitives import Sphere
 from skrobot.planner.utils import set_robot_config
-from yamaopt.polygon_constraint import polygon_to_desired_rpy
+import trimesh
+
 from yamaopt.polygon_constraint import ConcavePolygonException
+from yamaopt.polygon_constraint import polygon_to_desired_rpy
 
 
 class VisManager:

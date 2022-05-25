@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 import argparse
 import math
+
 import numpy as np
 from skrobot.coordinates.math import rotation_matrix
-from yamaopt.solver import KinematicSolver, SolverConfig
+
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
+from yamaopt.solver import KinematicSolver
+from yamaopt.solver import SolverConfig
 from yamaopt.visualizer import VisManager
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -1,5 +1,8 @@
 import os
-from skrobot.data import pr2_urdfpath, fetch_urdfpath
+
+from skrobot.data import fetch_urdfpath
+from skrobot.data import pr2_urdfpath
+
 
 # bit dirty, but we will probably use only pr2 and fetch, so...
 

@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 import argparse
+
 import numpy as np
-from yamaopt.solver import KinematicSolver, SolverConfig
+
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
+from yamaopt.solver import KinematicSolver
+from yamaopt.solver import SolverConfig
 from yamaopt.visualizer import VisManager
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

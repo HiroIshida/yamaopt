@@ -1,7 +1,8 @@
 import functools
-import numpy as np
-import operator
 import hashlib
+import operator
+
+import numpy as np
 
 
 def array_cache(f):

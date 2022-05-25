@@ -1,12 +1,16 @@
-import os
 import math
-import numpy as np
-from skrobot.coordinates.math import rotation_matrix
-from numpy.lib.twodim_base import eye
-from yamaopt.solver import KinematicSolver, SolverConfig
-from yamaopt.polygon_constraint import polygon_to_trans_constraint
-from yamaopt.polygon_constraint import polygon_to_matrix
+import os
+
 from data.sample_polygon import get_sample_real_polygons
+import numpy as np
+from numpy.lib.twodim_base import eye
+from skrobot.coordinates.math import rotation_matrix
+
+from yamaopt.polygon_constraint import polygon_to_matrix
+from yamaopt.polygon_constraint import polygon_to_trans_constraint
+from yamaopt.solver import KinematicSolver
+from yamaopt.solver import SolverConfig
+
 
 np.random.seed(1)
 
