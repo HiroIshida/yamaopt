@@ -3,7 +3,6 @@ import argparse
 
 import numpy as np
 
-from yamaopt.polygon_constraint import polygon_to_trans_constraint
 from yamaopt.solver import KinematicSolver
 from yamaopt.solver import SolverConfig
 from yamaopt.visualizer import VisManager

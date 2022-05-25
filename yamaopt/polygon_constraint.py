@@ -1,6 +1,5 @@
 import attr
 import numpy as np
-from skrobot.coordinates.math import matrix2quaternion
 from skrobot.coordinates.math import rpy_angle
 
 from yamaopt.utils import array_cache
@@ -11,8 +10,12 @@ class LinearEqConst(object):
     # A * x - b = 0
     A = attr.ib()
     b = attr.ib()
-    def __call__(self, x): return self.A.dot(x) - self.b
-    def is_satisfying(self, x): return np.all(np.abs(self.__call__(x)) < 1e-3)
+
+    def __call__(self, x):
+        return self.A.dot(x) - self.b
+
+    def is_satisfying(self, x):
+        return np.all(np.abs(self.__call__(x)) < 1e-3)
 
 
 @attr.s
@@ -20,8 +23,12 @@ class LinearIneqConst(object):
     # A * x - b >= 0
     A = attr.ib()
     b = attr.ib()
-    def __call__(self, x): return self.A.dot(x) - self.b
-    def is_satisfying(self, x): return np.all(self.__call__(x) > -1e-3)
+
+    def __call__(self, x):
+        return self.A.dot(x) - self.b
+
+    def is_satisfying(self, x):
+        return np.all(self.__call__(x) > -1e-3)
 
 
 class ConcavePolygonException(Exception):
@@ -71,8 +78,13 @@ def is_convex(np_polygon):
 
 
 def polygon_to_matrix(np_polygon, normal=None):
-    def normalize(vec): return vec / np.linalg.norm(vec)
-    def strip_z(vec): return np.array([vec[0], vec[1], 0.0])
+
+    def normalize(vec):
+        return vec / np.linalg.norm(vec)
+
+    def strip_z(vec):
+        return np.array([vec[0], vec[1], 0.0])
+
     x_flip = False
     # Calculate x axis (normal vector) of polygon
     points = np_polygon
@@ -115,7 +127,8 @@ def polygon_to_trans_constraint(np_polygon, normal=None, d_hover=0.0):
     if not is_convex(np_polygon):
         raise ConcavePolygonException
 
-    def normalize(vec): return vec / np.linalg.norm(vec)
+    def normalize(vec):
+        return vec / np.linalg.norm(vec)
 
     points = np_polygon
     M, x_flip = polygon_to_matrix(points, normal)

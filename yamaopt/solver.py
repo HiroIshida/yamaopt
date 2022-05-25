@@ -6,9 +6,7 @@ import attr
 import numpy as np
 import scipy.optimize
 import skrobot
-from skrobot.model.joint import FixedJoint
 from skrobot.model.joint import LinearJoint
-from skrobot.model.joint import OmniWheelJoint
 from skrobot.model.joint import RotationalJoint
 from tinyfk import RobotModel
 import yaml
@@ -75,7 +73,8 @@ class KinematicSolver:
         urdf_path = os.path.expanduser(config.urdf_path)
         self.kin = RobotModel(urdf_path)
 
-        robot_model = skrobot.model.RobotModel()  # Here this model is used only for obtaining joint type (as an urdf parser)
+        # Here this model is used only for obtaining joint type (as an urdf parser)
+        robot_model = skrobot.model.RobotModel()
         robot_model.load_urdf_file(urdf_path)
 
         self.config = config
@@ -97,9 +96,9 @@ class KinematicSolver:
         self.optframe_id = self.kin.get_link_ids([optimization_frame_name])[0]
 
     @property
-    def dof(self): return len(self.control_joint_ids) + 3 * (self.config.use_base)
+    def dof(self):
+        return len(self.control_joint_ids) + 3 * (self.config.use_base)
 
-    # TODO lru cache
     def forward_kinematics(self, q, link_id=None):
         if link_id is None:
             link_id = self.endeffector_id

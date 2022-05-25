@@ -1,9 +1,7 @@
 import math
-import os
 
 from data.sample_polygon import get_sample_real_polygons
 import numpy as np
-from numpy.lib.twodim_base import eye
 from skrobot.coordinates.math import rotation_matrix
 
 from yamaopt.polygon_constraint import polygon_to_matrix
@@ -40,17 +38,18 @@ def compute_numerical_jacobian(f, x0):
 
 
 def test_compute_numerical_jacobian():
-    def f(x): return np.array([np.sqrt(np.sum(x ** 2)), np.sqrt(np.sum(x ** 2))])
+    def func(x):
+        return np.array([np.sqrt(np.sum(x ** 2)), np.sqrt(np.sum(x ** 2))])
+
     x0 = np.random.randn(3)
-    jac_numel = compute_numerical_jacobian(f, x0)
+    jac_numel = compute_numerical_jacobian(func, x0)
 
     jac_real = np.array([x0 / np.sqrt(np.sum(x0 ** 2)), x0 / np.sqrt(np.sum(x0 ** 2))])
     np.testing.assert_almost_equal(jac_real, jac_numel, decimal=4)
 
 
 def _test_constraint_jacobian(constraint, q_test):
-    def f(q): return constraint(q)[0]
-    jac_numel = compute_numerical_jacobian(f, q_test)
+    jac_numel = compute_numerical_jacobian(lambda q: constraint(q)[0], q_test)
     jac_anal = constraint(q_test)[1]
     np.testing.assert_almost_equal(jac_numel, jac_anal, decimal=4)
 
@@ -97,8 +96,7 @@ def test_objfun():
     objfun = kinsol.create_objective_function(target_pos)
 
     def _test_objfun(objfun, q_test):
-        def f(q): return objfun(q)[0]
-        grad_numel = compute_numerical_jacobian(f, q_test)
+        grad_numel = compute_numerical_jacobian(lambda q: objfun(q)[0], q_test)
         grad_anal = objfun(q_test)[1]
         np.testing.assert_almost_equal(grad_numel, grad_anal, decimal=4)
 
@@ -195,7 +193,7 @@ def test_solve_multiple_with_realistic_data():
     for _normals in [normals_none, normals]:
         sol = kinsol.solve_multiple(q_init, polygons, target_obj_pos,
                                     normals=_normals, d_hover=d_hover)
-        pos, rpy = sol.end_coords[:3], sol.end_coords[3:]
+        pos, _ = sol.end_coords[:3], sol.end_coords[3:]
 
         ineq, eq = polygon_to_trans_constraint(sol.target_polygon, d_hover=d_hover)
         assert ineq.is_satisfying(pos)

@@ -12,7 +12,6 @@ from skrobot.model.primitives import Sphere
 from skrobot.planner.utils import set_robot_config
 import trimesh
 
-from yamaopt.polygon_constraint import ConcavePolygonException
 from yamaopt.polygon_constraint import polygon_to_desired_rpy
 
 
@@ -30,12 +29,7 @@ class VisManager:
             self.add_robot(copy.deepcopy(robot))
 
     def _convert_polygon_to_mesh(self, np_polygon):
-        vec0 = np_polygon[1] - np_polygon[0]
-        vec1 = np_polygon[2] - np_polygon[1]
-        tmp = np.cross(vec0, vec1)
-        n_vec = tmp / np.linalg.norm(tmp)
         center = np.mean(np_polygon, axis=0)
-        #center_hover = center + n_vec -0.1
 
         polygon_auged = np.vstack([np_polygon, np_polygon[0]])
 
@@ -72,8 +66,7 @@ class VisManager:
             np_polygon = [np_polygon]
         for p in np_polygon:
             V, F = self._convert_polygon_to_mesh(p)
-            mesh = visual_mesh = trimesh.Trimesh(
-                vertices=V, faces=F, face_colors=rgba)
+            mesh = trimesh.Trimesh(vertices=V, faces=F, face_colors=rgba)
             polygon_link = MeshLink(mesh)
             self.viewer.add(polygon_link)
 

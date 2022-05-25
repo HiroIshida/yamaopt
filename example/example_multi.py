@@ -5,7 +5,6 @@ import math
 import numpy as np
 from skrobot.coordinates.math import rotation_matrix
 
-from yamaopt.polygon_constraint import polygon_to_trans_constraint
 from yamaopt.solver import KinematicSolver
 from yamaopt.solver import SolverConfig
 from yamaopt.visualizer import VisManager
