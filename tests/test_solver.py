@@ -1,31 +1,33 @@
-import os
 import math
+
+from data.sample_polygon import get_sample_real_polygons
 import numpy as np
 from skrobot.coordinates.math import rotation_matrix
-from numpy.lib.twodim_base import eye
-from yamaopt.solver import KinematicSolver, SolverConfig
-from yamaopt.polygon_constraint import polygon_to_trans_constraint
+
 from yamaopt.polygon_constraint import polygon_to_matrix
-from data.sample_polygon import get_sample_real_polygons
+from yamaopt.polygon_constraint import polygon_to_trans_constraint
+from yamaopt.solver import KinematicSolver
+from yamaopt.solver import SolverConfig
+
 
 np.random.seed(1)
+
 
 def compute_numerical_jacobian(f, x0):
     f0 = f(x0)
 
     dim_inp = len(x0)
 
-    eps =1e-9
+    eps = 1e-9
     one_hots = [vec * eps for vec in np.eye(dim_inp)]
 
     is_out_jacobian = isinstance(f0, np.ndarray)
-
 
     if is_out_jacobian:
         dim_out = len(f0)
         jac = np.zeros((dim_out, dim_inp))
     else:
-        jac = np.zeros(dim_inp) # actually gradient
+        jac = np.zeros(dim_inp)  # actually gradient
 
     for i, dx in enumerate(one_hots):
         if is_out_jacobian:
@@ -34,19 +36,23 @@ def compute_numerical_jacobian(f, x0):
             jac[i] = (f(x0 + dx) - f(x0)) / eps
     return jac
 
+
 def test_compute_numerical_jacobian():
-    f = lambda x: np.array([np.sqrt(np.sum(x ** 2)), np.sqrt(np.sum(x ** 2))])
+    def func(x):
+        return np.array([np.sqrt(np.sum(x ** 2)), np.sqrt(np.sum(x ** 2))])
+
     x0 = np.random.randn(3)
-    jac_numel = compute_numerical_jacobian(f, x0)
+    jac_numel = compute_numerical_jacobian(func, x0)
 
     jac_real = np.array([x0 / np.sqrt(np.sum(x0 ** 2)), x0 / np.sqrt(np.sum(x0 ** 2))])
     np.testing.assert_almost_equal(jac_real, jac_numel, decimal=4)
 
+
 def _test_constraint_jacobian(constraint, q_test):
-    f = lambda q: constraint(q)[0]
-    jac_numel = compute_numerical_jacobian(f, q_test)
+    jac_numel = compute_numerical_jacobian(lambda q: constraint(q)[0], q_test)
     jac_anal = constraint(q_test)[1]
     np.testing.assert_almost_equal(jac_numel, jac_anal, decimal=4)
+
 
 def test_hand_constraint():
     config_path = "./config/pr2_conf.yaml"
@@ -62,10 +68,11 @@ def test_hand_constraint():
 
         q_tests = [np.random.randn(len(kinsol.control_joint_ids)) for _ in range(10)]
         # append case that fails with coarse discretization
-        q_tests.append(np.array([-0.74996962, 2.0546241, 0.05340954, -0.4791571, 0.35016716,  0.01716473, -0.42914228])) 
+        q_tests.append(np.array([-0.74996962, 2.0546241, 0.05340954, -0.4791571, 0.35016716, 0.01716473, -0.42914228]))
         for q_test in q_tests:
             _test_constraint_jacobian(ineq_const, q_test)
             _test_constraint_jacobian(eq_const, q_test)
+
 
 def test_base_constraint():
     config_path = "./config/pr2_conf.yaml"
@@ -79,6 +86,7 @@ def test_base_constraint():
     for q_test in q_tests:
         _test_constraint_jacobian(ineq_const, q_test)
 
+
 def test_objfun():
     config_path = "./config/pr2_conf.yaml"
     config = SolverConfig.from_config_path(config_path)
@@ -88,13 +96,13 @@ def test_objfun():
     objfun = kinsol.create_objective_function(target_pos)
 
     def _test_objfun(objfun, q_test):
-        f = lambda q: objfun(q)[0]
-        grad_numel = compute_numerical_jacobian(f, q_test)
+        grad_numel = compute_numerical_jacobian(lambda q: objfun(q)[0], q_test)
         grad_anal = objfun(q_test)[1]
         np.testing.assert_almost_equal(grad_numel, grad_anal, decimal=4)
 
     for _ in range(10):
         _test_objfun(objfun, np.random.randn(7))
+
 
 def test_solve():
     config_path = "./config/pr2_conf.yaml"
@@ -122,7 +130,7 @@ def test_solve():
             target_obj_pos = np.ones(3)
 
             sol = kinsol.solve(q_init, polygon, target_obj_pos, d_hover=d_hover)
-            assert sol.success 
+            assert sol.success
             assert len(sol.x) == 7 + 3 * use_base
 
             ineq, eq = kinsol.configuration_constraint_from_polygon(polygon, d_hover=d_hover)
@@ -132,12 +140,14 @@ def test_solve():
             assert ineq.is_satisfying(pos.flatten())
             assert eq.is_satisfying(pos.flatten())
 
+
 def test_solve_multiple_with_artificial_data():
     config_path = "./config/pr2_conf.yaml"
     config = SolverConfig.from_config_path(config_path, use_base=True)
     kinsol = KinematicSolver(config)
 
-    polygon1 = np.array([[1.0, -0.5, -0.5], [1.0, 0.5, -0.5], [1.0, 0.5, 0.5], [1.0, -0.5, 0.5]]) + np.array([0, 0, 1.0])
+    polygon1 = np.array([[1.0, -0.5, -0.5], [1.0, 0.5, -0.5], [1.0, 0.5, 0.5],
+                        [1.0, -0.5, 0.5]]) + np.array([0, 0, 1.0])
     polygon2 = polygon1.dot(rotation_matrix(math.pi / 2.0, [0, 0, 1.0]).T)
     polygon3 = polygon1.dot(rotation_matrix(-math.pi / 2.0, [0, 0, 1.0]).T)
     polygons = [polygon1, polygon2, polygon3]
@@ -161,6 +171,7 @@ def test_solve_multiple_with_artificial_data():
         sol = kinsol.solve_multiple(q_init, polygons, target_obj_pos, normals=_normals)
         np.testing.assert_equal(polygon3, sol.target_polygon)
 
+
 def test_solve_multiple_with_realistic_data():
     # Test using real polygon obtained from PR2 in the kitchen
     config_path = "./config/pr2_conf.yaml"
@@ -182,7 +193,7 @@ def test_solve_multiple_with_realistic_data():
     for _normals in [normals_none, normals]:
         sol = kinsol.solve_multiple(q_init, polygons, target_obj_pos,
                                     normals=_normals, d_hover=d_hover)
-        pos, rpy = sol.end_coords[:3], sol.end_coords[3:]
+        pos, _ = sol.end_coords[:3], sol.end_coords[3:]
 
         ineq, eq = polygon_to_trans_constraint(sol.target_polygon, d_hover=d_hover)
         assert ineq.is_satisfying(pos)

@@ -29,6 +29,11 @@ jobs:
                 sudo apt-get update -qq -y
                 sudo apt-get install -qq -y libspatialindex-dev freeglut3-dev libsuitesparse-dev libblas-dev liblapack-dev
 
+            - name: Check formating
+              run: |
+                pip install hacking isort
+                flake8 .
+
             - name: pip install this package
               run: |
                   pip install -e .

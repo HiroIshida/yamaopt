@@ -1,15 +1,16 @@
 from setuptools import setup
 
+
 setup_requires = []
 
 install_requires = [
-        "numpy>=1.16.6",
-        "attrs",
-        # https://github.com/HiroIshida/yamaopt/issues/18#issuecomment-1002915454
-        "scipy>=1.2.0",
-        "tinyfk>=0.4.6",
-        "scikit-robot>=0.0.15",
-        ]
+    "numpy>=1.16.6",
+    "attrs",
+    # https://github.com/HiroIshida/yamaopt/issues/18#issuecomment-1002915454
+    "scipy>=1.2.0",
+    "tinyfk>=0.4.6",
+    "scikit-robot>=0.0.15",
+]
 
 setup(
     name='yamaopt',

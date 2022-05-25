@@ -1,15 +1,19 @@
 import copy
 import os
-import numpy as np
 import time
-import trimesh
+
+import numpy as np
 import skrobot
 from skrobot.coordinates import Coordinates
 from skrobot.coordinates.math import rpy_matrix
-from skrobot.model.primitives import MeshLink, Sphere, Axis
+from skrobot.model.primitives import Axis
+from skrobot.model.primitives import MeshLink
+from skrobot.model.primitives import Sphere
 from skrobot.planner.utils import set_robot_config
+import trimesh
+
 from yamaopt.polygon_constraint import polygon_to_desired_rpy
-from yamaopt.polygon_constraint import ConcavePolygonException
+
 
 class VisManager:
     def __init__(self, config):
@@ -25,23 +29,17 @@ class VisManager:
             self.add_robot(copy.deepcopy(robot))
 
     def _convert_polygon_to_mesh(self, np_polygon):
-        vec0 = np_polygon[1] - np_polygon[0]
-        vec1 = np_polygon[2] - np_polygon[1]
-        tmp = np.cross(vec0, vec1)
-        n_vec = tmp / np.linalg.norm(tmp)
         center = np.mean(np_polygon, axis=0)
-        #center_hover = center + n_vec -0.1
 
         polygon_auged = np.vstack([np_polygon, np_polygon[0]])
 
         faces = []
         vertices = [center]
-        for i in range(len(polygon_auged)-1):
+        for i in range(len(polygon_auged) - 1):
             v0 = polygon_auged[i]
-            v1 = polygon_auged[i+1]
+            v1 = polygon_auged[i + 1]
             vertices.extend([v0, v1])
-            faces.append([0, len(vertices)-2, len(vertices)-1])
-
+            faces.append([0, len(vertices) - 2, len(vertices) - 1])
 
         vertices = np.array(vertices)
         return vertices, faces
@@ -68,8 +66,7 @@ class VisManager:
             np_polygon = [np_polygon]
         for p in np_polygon:
             V, F = self._convert_polygon_to_mesh(p)
-            mesh = visual_mesh=trimesh.Trimesh(
-                    vertices=V, faces=F, face_colors=rgba)
+            mesh = trimesh.Trimesh(vertices=V, faces=F, face_colors=rgba)
             polygon_link = MeshLink(mesh)
             self.viewer.add(polygon_link)
 

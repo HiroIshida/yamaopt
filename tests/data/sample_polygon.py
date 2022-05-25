@@ -1,4 +1,6 @@
 import numpy as np
+
+
 def get_sample_real_polygons():
     polygons = [np.array([[ 0.68977064,  0.54323846,  0.8483879 ],
                           [ 0.6592381 ,  0.48911691,  0.84576946],
