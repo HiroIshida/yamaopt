@@ -11,7 +11,8 @@ from yamaopt.visualizer import VisManager
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-robot', type=str, default='pr2', help='robot name')
-    parser.add_argument('-hover', type=float, default='0.05', help='hover distance')
+    parser.add_argument('-hover', type=float, default='0.05', help='hover distance [m]')
+    parser.add_argument('-shrink', type=float, default='0.05', help='polygon shrink distance [m]')
     parser.add_argument('-margin', type=float, default='5.0', help='joint limit margin [deg]')
     parser.add_argument('--visualize', action='store_true', help='visualize')
     parser.add_argument('--use_base', action='store_true', help='with base')
@@ -21,6 +22,7 @@ if __name__ == '__main__':
     visualize = args.visualize
     use_base = args.use_base
     d_hover = args.hover
+    polygon_shrink = args.shrink
     joint_limit_margin = args.margin
     limit_base = args.limit_base
 
@@ -48,7 +50,8 @@ if __name__ == '__main__':
     q_init = -np.ones(len(kinsol.control_joint_ids)) * 0.4
     sol = kinsol.solve(q_init, polygon, target_pos,
                        movable_polygon=movable_polygon,
-                       d_hover=d_hover, joint_limit_margin=joint_limit_margin)
+                       d_hover=d_hover, polygon_shrink=polygon_shrink,
+                       joint_limit_margin=joint_limit_margin)
     if sol.success:
         print('optimization succeeded.')
     else:
