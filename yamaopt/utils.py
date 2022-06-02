@@ -1,9 +1,9 @@
 import functools
 import hashlib
 import math
-import operator
-
 import numpy as np
+import operator
+import sympy
 
 
 def array_cache(f):
@@ -31,6 +31,47 @@ def array_cache(f):
             cache[hashval] = f(*args, **kwargs)
         return cache[hashval]
     return wrapped
+
+
+# define sympy expressions
+
+def expr_rotation_x(theta):
+    return sympy.Matrix([
+        [1, 0, 0],
+        [0, sympy.cos(theta), -sympy.sin(theta)],
+        [0, sympy.sin(theta), sympy.cos(theta)]
+    ])
+
+
+def expr_rotation_y(theta):
+    return sympy.Matrix([
+        [sympy.cos(theta), 0, sympy.sin(theta)],
+        [0, 1, 0],
+        [-sympy.sin(theta), 0, sympy.cos(theta)]
+    ])
+
+
+def expr_rotation_z(theta):
+    return sympy.Matrix([
+        [sympy.cos(theta), -sympy.sin(theta), 0],
+        [sympy.sin(theta), sympy.cos(theta), 0],
+        [0, 0, 1]
+    ])
+
+
+def expr_rpy_matrix(roll, pitch, yaw):
+    return expr_rotation_z(yaw) * expr_rotation_y(pitch) * expr_rotation_x(roll)
+
+
+def expr_axis(roll, pitch, yaw, axis_idx):
+    expr_rpy_mat = expr_rpy_matrix(roll, pitch, yaw)
+    return expr_rpy_mat[:, axis_idx]
+
+
+def expr_axis_jacobian(roll, pitch, yaw, axis_idx=0):
+    assert axis_idx in [0, 1, 2]
+    expr = expr_axis(roll, pitch, yaw, axis_idx)
+    return expr.jacobian((roll, pitch, yaw))
 
 
 def scipinize(fun):

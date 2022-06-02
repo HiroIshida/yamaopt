@@ -123,6 +123,15 @@ def polygon_to_desired_rpy(np_polygon, normal=None):
     return rpy
 
 
+@array_cache
+def polygon_to_desired_axis(np_polygon, axis_index, normal=None):
+    M, _ = polygon_to_matrix(np_polygon, normal)
+    axis = M.transpose()[axis_index]
+
+    assert isinstance(axis, np.ndarray) and axis.shape == (3,)
+    return axis
+
+
 def polygon_to_trans_constraint(
         np_polygon, normal=None, d_hover=0.0, polygon_shrink=0.0):
     if not is_convex(np_polygon):
