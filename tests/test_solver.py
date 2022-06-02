@@ -112,18 +112,20 @@ def test_solve():
 
         polygon1 = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
         polygon1 += np.array([0.7, 0.0, 1.0])
+
         polygon2 = np.array([[0.5, -0.3, 0.0], [0.5, 0.3, 0.0], [0.0, 0.0, 0.6]])
-        polygon2 += np.array([0.5, 0.0, 0.8])
+        polygon2 += np.array([0.3, 0.0, 0.8])
+
         polygon3 = np.array([[0.7, 0.7, 0.0], [0.9, 0.5, 0.3], [0.5, 0.9, 0.3]])
         polygon3 += np.array([-0.4, -0.3, 0.9])
-        # polygons = [polygon1, polygon2, polygon3]
-        polygons = [polygon1, polygon2]
+
+        polygons = [polygon1, polygon2, polygon3]
         normals = []
         for polygon in polygons:
             M, _ = polygon_to_matrix(polygon)
             normals.append(M.T[0])
 
-        d_hover = 0.00
+        d_hover = 0.02
 
         for i, polygon in enumerate(polygons):
             q_init = np.ones(7) * 0.3
