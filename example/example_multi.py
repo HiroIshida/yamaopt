@@ -16,6 +16,7 @@ if __name__ == '__main__':
     parser.add_argument('-hover', type=float, default='0.05', help='hover distance [m]')
     parser.add_argument('-shrink', type=float, default='0.05', help='polygon shrink distance [m]')
     parser.add_argument('-margin', type=float, default='5.0', help='joint limit margin [deg]')
+    parser.add_argument('-axis', type=str, default='x', help='algin axis name')
     parser.add_argument('--visualize', action='store_true', help='visualize')
     parser.add_argument('--use_base', action='store_true', help='with base')
     parser.add_argument('--limit_base', action='store_true', help='limit movable area of base')
@@ -25,6 +26,7 @@ if __name__ == '__main__':
     use_base = args.use_base
     d_hover = args.hover
     polygon_shrink = args.shrink
+    align_axis_name = args.axis
     joint_limit_margin = args.margin
     limit_base = args.limit_base
 
@@ -57,6 +59,7 @@ if __name__ == '__main__':
     q_init = -np.ones(len(kinsol.control_joint_ids)) * 0.4
     sol = kinsol.solve_multiple(q_init, polygons, target_obj_pos,
                                 movable_polygon=movable_polygon,
+                                align_axis_name=align_axis_name,
                                 d_hover=d_hover, polygon_shrink=polygon_shrink,
                                 joint_limit_margin=joint_limit_margin)
     if sol.success:

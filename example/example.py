@@ -14,6 +14,7 @@ if __name__ == '__main__':
     parser.add_argument('-hover', type=float, default='0.05', help='hover distance [m]')
     parser.add_argument('-shrink', type=float, default='0.05', help='polygon shrink distance [m]')
     parser.add_argument('-margin', type=float, default='5.0', help='joint limit margin [deg]')
+    parser.add_argument('-axis', type=str, default='x', help='algin axis name')
     parser.add_argument('--visualize', action='store_true', help='visualize')
     parser.add_argument('--use_base', action='store_true', help='with base')
     parser.add_argument('--limit_base', action='store_true', help='limit movable area of base')
@@ -24,6 +25,7 @@ if __name__ == '__main__':
     d_hover = args.hover
     polygon_shrink = args.shrink
     joint_limit_margin = args.margin
+    align_axis_name = args.axis
     limit_base = args.limit_base
 
     if robot_name == 'fetch':
@@ -50,6 +52,7 @@ if __name__ == '__main__':
     q_init = -np.ones(len(kinsol.control_joint_ids)) * 0.4
     sol = kinsol.solve(q_init, polygon, target_pos,
                        movable_polygon=movable_polygon,
+                       align_axis_name=align_axis_name,
                        d_hover=d_hover, polygon_shrink=polygon_shrink,
                        joint_limit_margin=joint_limit_margin)
     if sol.success:
