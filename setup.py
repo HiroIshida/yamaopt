@@ -8,6 +8,7 @@ install_requires = [
     "attrs",
     # https://github.com/HiroIshida/yamaopt/issues/18#issuecomment-1002915454
     "scipy>=1.2.0",
+    "sympy",
     "tinyfk>=0.4.6",
     "scikit-robot>=0.0.15",
 ]
