@@ -13,7 +13,7 @@ jobs:
         runs-on: ${{ matrix.os }}
         strategy:
           matrix:
-            python-version: [2.7, 3.6]
+            python-version: [3.8]
             os: [ubuntu-18.04, ubuntu-20.04]
         steps:
             - name: Checkout Code
