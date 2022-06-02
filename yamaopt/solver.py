@@ -169,7 +169,10 @@ class KinematicSolver:
             jac_pos = lin_eq.A.dot(J_pos)
 
             rpy = P_rot.flatten()
-            axis = f_axis(*rpy).flatten()
+
+            axis_sympy_style = f_axis(*rpy)  # (workaround) Somehow cannot flatten in python2..
+            axis = np.array([axis_sympy_style[0, 0], axis_sympy_style[1, 0], axis_sympy_style[2, 0]])
+
             axis_indices_extract = [1, 2]  # without extraction, jacobian will be degenerated
 
             jac_axis = f_axis_jacobian(*rpy)[axis_indices_extract, :]
