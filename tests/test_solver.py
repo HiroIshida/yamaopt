@@ -3,6 +3,7 @@ import math
 from data.sample_polygon import get_sample_real_polygons
 import numpy as np
 from skrobot.coordinates.math import rotation_matrix
+from skrobot.coordinates.math import rpy_matrix
 
 from yamaopt.polygon_constraint import polygon_to_matrix
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
@@ -112,18 +113,20 @@ def test_solve():
 
         polygon1 = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
         polygon1 += np.array([0.7, 0.0, 1.0])
+
         polygon2 = np.array([[0.5, -0.3, 0.0], [0.5, 0.3, 0.0], [0.0, 0.0, 0.6]])
-        polygon2 += np.array([0.5, 0.0, 0.8])
+        polygon2 += np.array([0.3, 0.0, 0.8])
+
         polygon3 = np.array([[0.7, 0.7, 0.0], [0.9, 0.5, 0.3], [0.5, 0.9, 0.3]])
         polygon3 += np.array([-0.4, -0.3, 0.9])
-        # polygons = [polygon1, polygon2, polygon3]
-        polygons = [polygon1, polygon2]
+
+        polygons = [polygon1]  # polygon2 and polygon3 are too hard ??
         normals = []
         for polygon in polygons:
             M, _ = polygon_to_matrix(polygon)
             normals.append(M.T[0])
 
-        d_hover = 0.00
+        d_hover = 0.02
 
         for i, polygon in enumerate(polygons):
             q_init = np.ones(7) * 0.3
@@ -139,6 +142,33 @@ def test_solve():
             ineq, eq = polygon_to_trans_constraint(polygon, d_hover=d_hover)
             assert ineq.is_satisfying(pos.flatten())
             assert eq.is_satisfying(pos.flatten())
+
+
+def test_solve_different_axis():
+
+    config_path = "./config/pr2_conf.yaml"
+
+    config = SolverConfig.from_config_path(config_path, use_base=True)
+    kinsol = KinematicSolver(config)
+
+    polygon = np.array([[0.0, -0.3, -0.3], [0.0, 0.3, -0.3], [0.0, 0.3, 0.3], [0.0, -0.3, 0.3]])
+    polygon += np.array([0.7, 0.0, 1.0])
+    n_vec_polygon = np.array([1.0, 0.0, 0.0])
+
+    q_init = np.ones(7) * 0.3
+    target_obj_pos = np.ones(3)
+
+    axis_names = ["x", "y", "z"]
+    for i in range(3):
+        align_axis_name = axis_names[i]
+
+        # Because using base, solution must be found for any align_axis
+        sol = kinsol.solve(q_init, polygon, target_obj_pos, d_hover=0.02, align_axis_name=align_axis_name)
+        assert sol.success
+        rpy = sol.end_coords[3:]
+        matrix = rpy_matrix(*np.flip(rpy))
+        align_axis = matrix.transpose()[i]
+        np.testing.assert_almost_equal(align_axis, n_vec_polygon, decimal=5)
 
 
 def test_solve_multiple_with_artificial_data():

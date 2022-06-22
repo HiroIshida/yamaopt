@@ -8,13 +8,17 @@ import scipy.optimize
 import skrobot
 from skrobot.model.joint import LinearJoint
 from skrobot.model.joint import RotationalJoint
+import sympy
 from tinyfk import RobotModel
 import yaml
 
 from yamaopt.polygon_constraint import ConcavePolygonException
-from yamaopt.polygon_constraint import polygon_to_desired_rpy
+from yamaopt.polygon_constraint import polygon_to_desired_axis
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
 from yamaopt.polygon_constraint import ZValueNotZeroException
+from yamaopt.pycompat import lru_cache
+from yamaopt.utils import expr_axis
+from yamaopt.utils import expr_axis_jacobian
 from yamaopt.utils import scipinize
 
 
@@ -126,11 +130,27 @@ class KinematicSolver:
         return f
 
     def configuration_constraint_from_polygon(
-            self, np_polygon, normal=None, d_hover=0.0, polygon_shrink=0.0):
+            self,
+            np_polygon,
+            normal=None,
+            align_axis_name="x",
+            d_hover=0.0,
+            polygon_shrink=0.0):
+
+        axis_names = ["x", "y", "z"]
+        assert align_axis_name in axis_names
+
         # for pos constraint
         lin_ineq, lin_eq = polygon_to_trans_constraint(
             np_polygon, normal=normal,
             d_hover=d_hover, polygon_shrink=polygon_shrink)
+
+        hand_match_axis_idx = axis_names.index(align_axis_name)
+        f_axis = self.get_axis_lambda(hand_match_axis_idx)
+        f_axis_jacobian = self.get_axis_jacobian_lambda(hand_match_axis_idx)
+
+        polygon_normal_axis_idx = 0
+        axis_desired = polygon_to_desired_axis(np_polygon, polygon_normal_axis_idx, normal=normal)
 
         def hand_ineq_constraint(q):
             P_whole, J_whole = self.forward_kinematics(q)
@@ -148,15 +168,20 @@ class KinematicSolver:
             val_pos = ((lin_eq.A.dot(P_pos.T)).T - lin_eq.b).flatten()
             jac_pos = lin_eq.A.dot(J_pos)
 
-            # remove roll constraint
-            rpy_desired = polygon_to_desired_rpy(np_polygon, normal)
-            py_desired = rpy_desired[1:]  # ignore roll constraint
-            P_rot_roll_ignored = P_rot[:, 1:]
-            J_rot_roll_ignored = J_rot[1:, :]
+            rpy = P_rot.flatten()
 
-            # rot value and rot jacobian
-            val_rot = P_rot_roll_ignored.flatten() - py_desired
-            jac_rot = J_rot_roll_ignored
+            axis_sympy_style = f_axis(*rpy)  # (workaround) Somehow cannot flatten in python2..
+            axis = np.array([axis_sympy_style[0, 0], axis_sympy_style[1, 0], axis_sympy_style[2, 0]])
+
+            axis_indices_extract = [1, 2]  # without extraction, jacobian will be degenerated
+
+            jac_axis = f_axis_jacobian(*rpy)[axis_indices_extract, :]
+
+            val_rot = axis[axis_indices_extract] - axis_desired[axis_indices_extract]
+            jac_rot = jac_axis.dot(J_rot)
+            np.hstack([val_pos, val_rot])
+            np.vstack([jac_pos, jac_rot])
+
             return np.hstack([val_pos, val_rot]), np.vstack([jac_pos, jac_rot])
 
         return hand_ineq_constraint, hand_eq_constraint
@@ -181,9 +206,18 @@ class KinematicSolver:
 
         return base_ineq_constraint
 
-    def solve(self, q_init, np_polygon, target_obs_pos, movable_polygon=None,
-              normal=None, d_hover=0.0, polygon_shrink=0.0,
-              joint_limit_margin=0.0):
+    def solve(
+            self,
+            q_init,
+            np_polygon,
+            target_obs_pos,
+            movable_polygon=None,
+            normal=None,
+            align_axis_name="z",
+            d_hover=0.0,
+            polygon_shrink=0.0,
+            joint_limit_margin=0.0):
+
         if self.config.use_base:
             q_init = np.hstack((q_init, np.zeros(3)))
         else:
@@ -195,6 +229,7 @@ class KinematicSolver:
             # Constraint functions for hand
             f_ineq, f_eq = self.configuration_constraint_from_polygon(
                 np_polygon, normal=normal,
+                align_axis_name=align_axis_name,
                 d_hover=d_hover, polygon_shrink=polygon_shrink)
             eq_const_scipy, eq_const_jac_scipy = scipinize(f_eq)
             eq_dict = {'type': 'eq', 'fun': eq_const_scipy,
@@ -237,8 +272,8 @@ class KinematicSolver:
         # Solve optimization
         sqp_option = {'maxiter': 300}
         sol = scipy.optimize.minimize(
-            f, q_init, method='SLSQP', jac=jac,
-            constraints=cons, bounds=joint_limits_tight, options=sqp_option)
+            f, q_init, method='SLSQP', jac=jac, bounds=joint_limits_tight,
+            constraints=cons, options=sqp_option)
 
         """
         if output_gif:
@@ -251,9 +286,15 @@ class KinematicSolver:
         """
         return self._create_solver_result_from_scipy_sol(sol, np_polygon, d_hover)
 
-    def solve_multiple(self, q_init, np_polygons, target_obs_pos,
-                       movable_polygon=None, normals=None,
-                       d_hover=0.0, polygon_shrink=0.0,
+    def solve_multiple(self,
+                       q_init,
+                       np_polygons,
+                       target_obs_pos,
+                       movable_polygon=None,
+                       normals=None,
+                       align_axis_name="x",
+                       d_hover=0.0,
+                       polygon_shrink=0.0,
                        joint_limit_margin=0.0):
         """
         np_polygons: List[np.ndarray]
@@ -267,6 +308,7 @@ class KinematicSolver:
             sol = self.solve(
                 q_init, np_polygon, target_obs_pos,
                 movable_polygon=movable_polygon, normal=normal,
+                align_axis_name=align_axis_name,
                 d_hover=d_hover, polygon_shrink=polygon_shrink,
                 joint_limit_margin=joint_limit_margin)
             if sol.success and sol.fun < min_cost:
@@ -284,3 +326,19 @@ class KinematicSolver:
         optframe_pose = self.forward_kinematics(sol_scipy.x, self.optframe_id)[0][0]
         return SolverResult(sol_scipy.success, sol_scipy.x, sol_scipy.fun,
                             endeffector_pose, optframe_pose, target_polygon, d_hover, sol_scipy)
+
+    @staticmethod
+    @lru_cache(maxsize=None)
+    def get_axis_lambda(axis_idx):
+        arg_exprs = sympy.symbols(("roll", "pitch", "yaw"))
+        expr = expr_axis(*arg_exprs, axis_idx=axis_idx)
+        f_axis = sympy.lambdify(arg_exprs, expr, modules="numpy")
+        return f_axis
+
+    @staticmethod
+    @lru_cache(maxsize=None)
+    def get_axis_jacobian_lambda(axis_idx):
+        arg_exprs = sympy.symbols(("roll", "pitch", "yaw"))
+        expr = expr_axis_jacobian(*arg_exprs, axis_idx=axis_idx)
+        f_jac_axis = sympy.lambdify(arg_exprs, expr, modules="numpy")
+        return f_jac_axis

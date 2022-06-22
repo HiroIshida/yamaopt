@@ -6,6 +6,7 @@ from skrobot.coordinates.math import rotation_matrix
 from skrobot.coordinates.math import rpy2quaternion
 
 from yamaopt.polygon_constraint import is_convex
+from yamaopt.polygon_constraint import polygon_to_desired_axis
 from yamaopt.polygon_constraint import polygon_to_desired_rpy
 from yamaopt.polygon_constraint import polygon_to_matrix
 from yamaopt.polygon_constraint import polygon_to_trans_constraint
@@ -150,3 +151,21 @@ def test_polygon_to_desired_rpy():
             q = polygon[0] if i == n_verts - 1 else polygon[i + 1]
             vec = p - q
             assert abs(z_axis.dot(vec)) < 1e-5
+
+
+def test_polygon_to_desired_axis():
+
+    def normalize(vec):
+        return vec / np.linalg.norm(vec)
+
+    polygon1 = simple_simplex()
+
+    x_axis = polygon_to_desired_axis(polygon1, 0)
+    np.testing.assert_almost_equal(x_axis, normalize(np.ones(3)))
+
+    y_axis = polygon_to_desired_axis(polygon1, 1)
+    np.testing.assert_almost_equal(y_axis, normalize(np.array([-1., 1., 0])))
+
+    z_axis = polygon_to_desired_axis(polygon1, 2)
+    z_axis_desired = np.cross(x_axis, y_axis)
+    np.testing.assert_almost_equal(z_axis, z_axis_desired)
