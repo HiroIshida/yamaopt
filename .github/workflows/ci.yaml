@@ -36,6 +36,7 @@ jobs:
 
             - name: pip install this package
               run: |
+                  pip install scikit-build
                   pip install -e .
 
             - name: pip install pytest

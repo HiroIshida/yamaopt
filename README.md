@@ -9,6 +9,7 @@ Given urdf and multiple polygons and observation point, the program determines t
 If you use python 2.x, following installation is required to install scikit-robot.
 ```
 sudo apt-get install -y libspatialindex-dev freeglut3-dev libsuitesparse-dev libblas-dev liblapack-dev
+pip install scikit-build
 ```
 
 Yamaopt can be installed by

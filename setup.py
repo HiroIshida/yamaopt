@@ -10,7 +10,7 @@ install_requires = [
     "scipy>=1.2.0",
     'sympy==0.7;python_version<"3.0"',
     'sympy;python_version>="3.0"',
-    "tinyfk>=0.4.6",
+    "tinyfk>=0.6.0",
     "scikit-robot>=0.0.15",
 ]
 
@@ -28,11 +28,11 @@ setup(
         'Natural Language :: English',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: Implementation :: CPython',
     ],
+    py_modules=[],
     install_requires=install_requires,
 )
