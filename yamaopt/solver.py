@@ -9,7 +9,9 @@ import skrobot
 from skrobot.model.joint import LinearJoint
 from skrobot.model.joint import RotationalJoint
 import sympy
-from tinyfk import RobotModel
+from tinyfk import BaseType
+from tinyfk import KinematicModel
+from tinyfk import RotationType
 import yaml
 
 from yamaopt.polygon_constraint import ConcavePolygonException
@@ -75,7 +77,7 @@ class SolverResult(object):
 class KinematicSolver:
     def __init__(self, config):
         urdf_path = os.path.expanduser(config.urdf_path)
-        self.kin = RobotModel(urdf_path)
+        self.kin = KinematicModel(urdf_path)
 
         # Here this model is used only for obtaining joint type (as an urdf parser)
         robot_model = skrobot.model.RobotModel()
@@ -107,14 +109,17 @@ class KinematicSolver:
         if link_id is None:
             link_id = self.endeffector_id
         assert isinstance(q, np.ndarray) and q.ndim == 1
-        with_jacobian = True
-        use_rotation = True
-        use_base = self.config.use_base
 
         link_ids = [link_id]
         joint_ids = self.control_joint_ids
-        P, J = self.kin.solve_forward_kinematics(
-            [q], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
+
+        rot_type = RotationType.RPY
+
+        use_base = self.config.use_base
+        base_type = BaseType.PLANER if use_base else BaseType.FIXED
+
+        P, J = self.kin.solve_fk(
+            [q], link_ids, joint_ids, rot_type=rot_type, base_type=base_type, with_jacobian=True)
         return P, J
 
     def create_objective_function(self, target_obs_pos):
@@ -266,8 +271,9 @@ class KinematicSolver:
                 continue
             is_infinite_rotational_joint = (None in joint_limits_tight[i])
             if not is_infinite_rotational_joint:
-                joint_limits_tight[i][0] += margin  # tighten lower bound
-                joint_limits_tight[i][1] -= margin  # tighten upper bound
+                limit = joint_limits_tight[i]
+                new_limit = (limit[0] + margin, limit[1] - margin)
+                joint_limits_tight[i] = new_limit
 
         # Solve optimization
         sqp_option = {'maxiter': 300}

@@ -1,8 +1,9 @@
 import functools
 import hashlib
 import math
-import numpy as np
 import operator
+
+import numpy as np
 import sympy
 
 
